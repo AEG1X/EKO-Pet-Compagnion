@@ -11,8 +11,8 @@ Les tests tournent avant chaque déploiement ; un échec bloque tout.
    indiqués par Cloudflare (désactive d'abord DNSSEC chez OVH ; on le réactive ensuite côté Cloudflare).
    Le Worker se rattache tout seul au domaine au déploiement : `eko-companion.fr` en production, `staging.eko-companion.fr` en test
    (clés `routes` de `wrangler.jsonc`). Attention : changer de domaine plus tard invalide les passkeys et le QR de la médaille.
-3. **Jeton d'API** : Mon profil › Jetons d'API › Créer un jeton, modèle « Modifier les Workers Cloudflare », en ajoutant la permission **D1 : Modifier**.
-   Limite-le à ton compte.
+3. **Jeton d'API** : Mon profil › Jetons d'API › Créer un jeton, modèle « Modifier les Workers Cloudflare », en ajoutant les permissions
+   **Compte › D1 › Modifier** et **Zone › DNS › Modifier** (pour rattacher le domaine). Limite-le à ton compte et à la zone `eko-companion.fr`.
 4. **Secrets GitHub** : dans le dépôt, Settings › Secrets and variables › Actions, ajoute `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`
    (l'identifiant de compte est affiché dans la colonne de droite de la page d'accueil Cloudflare).
 
