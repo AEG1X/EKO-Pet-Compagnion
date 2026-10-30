@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Vérification des types
+        run: pnpm typecheck
+      - name: Construction du front
+        run: pnpm --filter @eko/web build
+      - name: Tests (paquet partagé, front, Worker)
+        run: pnpm test
+      - name: Construction du Worker (sans déploiement)
+        run: pnpm --filter @eko/worker build

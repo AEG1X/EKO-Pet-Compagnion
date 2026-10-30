@@ -1,0 +1,5 @@
+# Copier en .dev.vars pour le développement local (jamais commité).
+# Jeton à saisir lors de la toute première configuration du compte.
+SETUP_TOKEN=change-moi-par-une-longue-valeur-aleatoire
+# Clé secrète utilisée pour protéger le PIN (openssl rand -base64 32).
+PIN_PEPPER=change-moi-aussi

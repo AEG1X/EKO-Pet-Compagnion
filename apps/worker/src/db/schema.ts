@@ -1,0 +1,117 @@
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+/**
+ * Horodatages en millisecondes depuis l'époque Unix (UTC).
+ * Aucun secret n'est stocké en clair : jetons de session, codes de secours et PIN sont hachés.
+ */
+
+export const owner = sqliteTable('owner', {
+  id: text('id').primaryKey(),
+  displayName: text('display_name').notNull(),
+  /** Identifiant WebAuthn opaque de l'utilisateur (base64url). */
+  webauthnUserId: text('webauthn_user_id').notNull(),
+  createdAt: integer('created_at').notNull(),
+});
+
+export const passkey = sqliteTable(
+  'passkey',
+  {
+    /** Identifiant de la clé d'accès (base64url), fourni par l'authentificateur. */
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    publicKey: text('public_key').notNull(),
+    counter: integer('counter').notNull().default(0),
+    transports: text('transports'),
+    deviceType: text('device_type').notNull(),
+    backedUp: integer('backed_up', { mode: 'boolean' }).notNull(),
+    label: text('label').notNull(),
+    createdAt: integer('created_at').notNull(),
+    lastUsedAt: integer('last_used_at'),
+  },
+  (t) => [index('passkey_owner_idx').on(t.ownerId)],
+);
+
+export const session = sqliteTable(
+  'session',
+  {
+    /** SHA-256 du jeton de session ; le jeton lui-même ne vit que dans le cookie. */
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: ['full', 'recovery'] }).notNull(),
+    createdAt: integer('created_at').notNull(),
+    expiresAt: integer('expires_at').notNull(),
+    lastSeenAt: integer('last_seen_at').notNull(),
+    /** Null = verrouillée : le PIN (ou une passkey) est requis. */
+    unlockedAt: integer('unlocked_at'),
+    userAgent: text('user_agent'),
+  },
+  (t) => [index('session_owner_idx').on(t.ownerId), index('session_expires_idx').on(t.expiresAt)],
+);
+
+export const recoveryCode = sqliteTable(
+  'recovery_code',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull().unique(),
+    createdAt: integer('created_at').notNull(),
+    usedAt: integer('used_at'),
+  },
+  (t) => [index('recovery_owner_idx').on(t.ownerId)],
+);
+
+export const pin = sqliteTable('pin', {
+  ownerId: text('owner_id')
+    .primaryKey()
+    .references(() => owner.id, { onDelete: 'cascade' }),
+  hash: text('hash').notNull(),
+  salt: text('salt').notNull(),
+  /** Erreurs consécutives depuis le dernier succès. */
+  failedCount: integer('failed_count').notNull().default(0),
+  lockedUntil: integer('locked_until'),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export const settings = sqliteTable('settings', {
+  ownerId: text('owner_id')
+    .primaryKey()
+    .references(() => owner.id, { onDelete: 'cascade' }),
+  theme: text('theme').notNull(),
+  accent: text('accent').notNull(),
+  sectionOrder: text('section_order').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export const authChallenge = sqliteTable('auth_challenge', {
+  id: text('id').primaryKey(),
+  purpose: text('purpose', { enum: ['setup', 'login', 'add_passkey'] }).notNull(),
+  challenge: text('challenge').notNull(),
+  ownerId: text('owner_id'),
+  /** Données propres à l'étape (JSON), par exemple le nom saisi lors de la configuration. */
+  payload: text('payload'),
+  expiresAt: integer('expires_at').notNull(),
+});
+
+export const rateLimit = sqliteTable('rate_limit', {
+  key: text('key').primaryKey(),
+  windowStart: integer('window_start').notNull(),
+  count: integer('count').notNull(),
+});
+
+export const auditLog = sqliteTable(
+  'audit_log',
+  {
+    id: text('id').primaryKey(),
+    at: integer('at').notNull(),
+    event: text('event').notNull(),
+    /** Détail non sensible uniquement (jamais de jeton, de PIN ni d'adresse IP). */
+    detail: text('detail'),
+  },
+  (t) => [index('audit_at_idx').on(t.at)],
+);

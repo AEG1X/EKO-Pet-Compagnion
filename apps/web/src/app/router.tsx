@@ -1,0 +1,52 @@
+import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import { Dashboard } from '../features/dashboard/Dashboard';
+import { MorePage } from '../features/placeholder/MorePage';
+import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
+import { SettingsPage } from '../features/settings/SettingsPage';
+import { NAV } from './navigation';
+import { Shell } from './Shell';
+
+const rootRoute = createRootRoute({ component: Shell });
+
+const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: Dashboard });
+const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reglages', component: SettingsPage });
+const moreRoute = createRoute({ getParentRoute: () => rootRoute, path: '/plus', component: MorePage });
+const addRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ajouter',
+  component: () => (
+    <SectionPlaceholder
+      entry={{
+        to: '/ajouter',
+        label: 'Ajout rapide',
+        icon: 'plus',
+        phase: 'A2',
+        description: 'Ajouter en deux gestes un soin, une pesée, une dépense ou un rappel.',
+      }}
+    />
+  ),
+});
+
+// Sections prévues dans les phases suivantes.
+const sectionRoutes = NAV.filter((entry) => entry.phase).map((entry) =>
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: entry.to,
+    component: () => <SectionPlaceholder entry={entry} />,
+  }),
+);
+
+const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, moreRoute, addRoute, ...sectionRoutes]);
+
+export const router = createRouter({
+  routeTree,
+  defaultNotFoundComponent: () => (
+    <SectionPlaceholder entry={{ to: '/', label: 'Page introuvable', icon: 'home', description: 'Cette page n’existe pas.' }} />
+  ),
+});
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
+}

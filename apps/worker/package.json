@@ -1,0 +1,30 @@
+{
+  "name": "@eko/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "@eko/shared": "workspace:*",
+    "@simplewebauthn/server": "14.0.0",
+    "drizzle-orm": "0.45.4",
+    "hono": "4.13.14",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.11",
+    "@cloudflare/workers-types": "5.20261030.1",
+    "drizzle-kit": "0.31.11",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12",
+    "wrangler": "4.156.0"
+  }
+}
