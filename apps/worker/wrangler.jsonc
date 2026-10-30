@@ -32,36 +32,39 @@
   "env": {
     "staging": {
       "name": "eko-staging",
+      "routes": [{ "pattern": "staging.eko-companion.fr", "custom_domain": true }],
       "triggers": { "crons": ["0 3 * * *"] },
       "vars": {
         "ENVIRONMENT": "staging",
-        "RP_ID": "REMPLACER_PAR_DOMAINE_STAGING",
+        "RP_ID": "staging.eko-companion.fr",
         "RP_NAME": "EKO (test)",
-        "ORIGIN": "https://REMPLACER_PAR_DOMAINE_STAGING"
+        "ORIGIN": "https://staging.eko-companion.fr"
       },
       "d1_databases": [
         {
           "binding": "DB",
           "database_name": "eko-staging",
-          "database_id": "REMPLACER_PAR_ID_D1_STAGING",
+          "database_id": "fb9031de-c1a1-4440-8372-a0c5a738d6a9",
           "migrations_dir": "migrations"
         }
       ]
     },
     "production": {
       "name": "eko",
+      // Domaine encodé dans le QR de la médaille : ne plus le changer (voir docs/decisions/0003-domaine-personnel.md).
+      "routes": [{ "pattern": "eko-companion.fr", "custom_domain": true }],
       "triggers": { "crons": ["0 3 * * *"] },
       "vars": {
         "ENVIRONMENT": "production",
-        "RP_ID": "REMPLACER_PAR_DOMAINE",
+        "RP_ID": "eko-companion.fr",
         "RP_NAME": "EKO",
-        "ORIGIN": "https://REMPLACER_PAR_DOMAINE"
+        "ORIGIN": "https://eko-companion.fr"
       },
       "d1_databases": [
         {
           "binding": "DB",
           "database_name": "eko-prod",
-          "database_id": "REMPLACER_PAR_ID_D1_PRODUCTION",
+          "database_id": "17a3f8a1-7b80-4c3c-9a6a-8265e4c973b6",
           "migrations_dir": "migrations"
         }
       ]

@@ -5,15 +5,14 @@ Les tests tournent avant chaque déploiement ; un échec bloque tout.
 
 ## 1. Une seule fois : préparer Cloudflare
 
-1. **Bases D1** : dans le tableau de bord Cloudflare, Stockage et bases de données › D1, crée `eko-staging` et `eko-prod`.
-   Copie leurs identifiants dans `apps/worker/wrangler.jsonc` à la place de `REMPLACER_PAR_ID_D1_STAGING` et `REMPLACER_PAR_ID_D1_PRODUCTION`.
-2. **Domaines** : remplace `REMPLACER_PAR_DOMAINE` (production, par exemple `eko.mondomaine.fr`) et `REMPLACER_PAR_DOMAINE_STAGING`
-   (par exemple `eko-staging.<ton-sous-domaine>.workers.dev`). `RP_ID` est le domaine seul, `ORIGIN` l'adresse complète en `https://`.
-   Pour la production sur ton domaine, ajoute dans le bloc `production` :
-   `"routes": [{ "pattern": "eko.mondomaine.fr", "custom_domain": true }]`.
-   Attention : changer de domaine plus tard invalide les passkeys, et l'adresse sera gravée sur la médaille.
-3. **Jeton d'API** : Mon profil › Jetons d'API › Créer un jeton, modèle « Modifier les Workers Cloudflare », en ajoutant la permission **D1 : Modifier**.
-   Limite-le à ton compte.
+1. **Bases D1** : `eko-staging` et `eko-prod` (créées le 30/10/2026, Europe de l'Ouest), leurs identifiants sont dans `apps/worker/wrangler.jsonc`.
+2. **Domaine** : `eko-companion.fr` (acheté chez OVH le 30/10/2026, échéance octobre 2029, renouvellement automatique à activer).
+   Dans Cloudflare, Ajouter un domaine › `eko-companion.fr` › offre Free, puis remplace chez OVH les serveurs DNS par les deux serveurs
+   indiqués par Cloudflare (désactive d'abord DNSSEC chez OVH ; on le réactive ensuite côté Cloudflare).
+   Le Worker se rattache tout seul au domaine au déploiement : `eko-companion.fr` en production, `staging.eko-companion.fr` en test
+   (clés `routes` de `wrangler.jsonc`). Attention : changer de domaine plus tard invalide les passkeys et le QR de la médaille.
+3. **Jeton d'API** : Mon profil › Jetons d'API › Créer un jeton, modèle « Modifier les Workers Cloudflare », en ajoutant les permissions
+   **Compte › D1 › Modifier** et **Zone › DNS › Modifier** (pour rattacher le domaine). Limite-le à ton compte et à la zone `eko-companion.fr`.
 4. **Secrets GitHub** : dans le dépôt, Settings › Secrets and variables › Actions, ajoute `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`
    (l'identifiant de compte est affiché dans la colonne de droite de la page d'accueil Cloudflare).
 
