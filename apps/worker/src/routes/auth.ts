@@ -27,14 +27,19 @@ const verifySchema = z.object({
   response: z.record(z.string(), z.unknown()),
 });
 
-async function ownerExists(c: { get: (k: 'db') => AppEnv['Variables']['db'] }): Promise<boolean> {
-  const row = await c.get('db').query.owner.findFirst({ columns: { id: true } });
+/**
+ * La configuration est ouverte tant qu'aucune passkey n'existe. Cela couvre la toute première
+ * installation et la procédure d'urgence (docs/securite.md) : effacer les passkeys en ligne de
+ * commande rouvre la configuration sans toucher aux données d'Eko.
+ */
+async function isConfigured(c: { get: (k: 'db') => AppEnv['Variables']['db'] }): Promise<boolean> {
+  const row = await c.get('db').query.passkey.findFirst({ columns: { id: true } });
   return Boolean(row);
 }
 
 export const authRoutes = new Hono<AppEnv>()
   // --- Première configuration : réservée à celui qui connaît SETUP_TOKEN, et une seule fois.
-  .get('/setup/status', async (c) => c.json({ needsSetup: !(await ownerExists(c)) }))
+  .get('/setup/status', async (c) => c.json({ needsSetup: !(await isConfigured(c)) }))
 
   .post('/setup/options', async (c) => {
     await enforceRateLimit(c, RATE_LIMITS.setup);
@@ -43,7 +48,7 @@ export const authRoutes = new Hono<AppEnv>()
     if (!expected || expected.length < 16 || !timingSafeEqual(setupToken, expected)) {
       throw apiError(403, 'setup_forbidden', 'Jeton de configuration invalide.');
     }
-    if (await ownerExists(c)) throw apiError(409, 'already_setup', 'EKO est déjà configuré.');
+    if (await isConfigured(c)) throw apiError(409, 'already_setup', 'EKO est déjà configuré.');
     const webauthnUserId = toBase64Url(randomBytes(32));
     return c.json(
       await startRegistration(c, 'setup', { ownerId: null, webauthnUserId, displayName }, [], {
@@ -57,17 +62,20 @@ export const authRoutes = new Hono<AppEnv>()
     await enforceRateLimit(c, RATE_LIMITS.setup);
     const { challengeId, response } = await readJson(c, verifySchema);
     const challenge = await consumeChallenge(c, challengeId, 'setup');
-    if (await ownerExists(c)) throw apiError(409, 'already_setup', 'EKO est déjà configuré.');
+    if (await isConfigured(c)) throw apiError(409, 'already_setup', 'EKO est déjà configuré.');
     const { displayName, webauthnUserId } = JSON.parse(challenge.payload ?? '{}') as {
       displayName: string;
       webauthnUserId: string;
     };
     const info = await finishRegistration(c, challenge.challenge, response);
     const db = c.get('db');
-    const ownerId = randomId();
+    const existing = await db.query.owner.findFirst();
+    const ownerId = existing?.id ?? randomId();
     const now = Date.now();
     await db.batch([
-      db.insert(schema.owner).values({ id: ownerId, displayName, webauthnUserId, createdAt: now }),
+      existing
+        ? db.update(schema.owner).set({ displayName, webauthnUserId }).where(eq(schema.owner.id, ownerId))
+        : db.insert(schema.owner).values({ id: ownerId, displayName, webauthnUserId, createdAt: now }),
       db.insert(schema.passkey).values({
         id: info.credential.id,
         ownerId,
@@ -80,7 +88,8 @@ export const authRoutes = new Hono<AppEnv>()
         createdAt: now,
       }),
     ]);
-    await writeSettings(db, ownerId, DEFAULT_SETTINGS);
+    if (!existing) await writeSettings(db, ownerId, DEFAULT_SETTINGS);
+    await revokeAllSessions(c, ownerId);
     const recoveryCodes = await regenerateRecoveryCodes(c, ownerId);
     await createSession(c, ownerId, 'full');
     await audit(db, 'setup_completed');

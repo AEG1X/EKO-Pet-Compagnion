@@ -13,7 +13,7 @@ export function b64url(bytes: Uint8Array): string {
 }
 
 async function sha256(data: Uint8Array): Promise<Uint8Array> {
-  return new Uint8Array(await crypto.subtle.digest('SHA-256', data));
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', data as Uint8Array<ArrayBuffer>));
 }
 
 function concat(...parts: Uint8Array[]): Uint8Array {
@@ -35,7 +35,7 @@ function rawToDer(raw: Uint8Array): Uint8Array {
   const integer = (bytes: Uint8Array) => {
     let i = 0;
     while (i < bytes.length - 1 && bytes[i] === 0) i++;
-    let v = bytes.slice(i);
+    let v: Uint8Array = bytes.slice(i);
     if ((v[0] ?? 0) & 0x80) v = concat(new Uint8Array([0]), v);
     return concat(new Uint8Array([0x02, v.length]), v);
   };
@@ -85,7 +85,7 @@ export class VirtualAuthenticator {
       cose,
     );
     const attestationObject = encodeCbor(
-      new Map<string, string | Uint8Array | Map<never, never>>([
+      new Map<string, string | Uint8Array | Map<number, number>>([
         ['fmt', 'none'],
         ['attStmt', new Map()],
         ['authData', authData],
@@ -120,7 +120,7 @@ export class VirtualAuthenticator {
     );
     const signed = concat(authenticatorData, await sha256(clientDataJSON));
     const raw = new Uint8Array(
-      await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, this.keys.privateKey, signed),
+      await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, this.keys.privateKey, signed as Uint8Array<ArrayBuffer>),
     );
     if (tamper) raw[10] = (raw[10] ?? 0) ^ 0xff;
     return {

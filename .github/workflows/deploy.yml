@@ -1,0 +1,50 @@
+name: Déploiement
+
+# Déploiement manuel uniquement : rien ne part en production sans ton action.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environnement cible
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Vérifications avant déploiement
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Secret CLOUDFLARE_API_TOKEN manquant (voir docs/deploiement.md)"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Secret CLOUDFLARE_ACCOUNT_ID manquant (voir docs/deploiement.md)"; exit 1; }
+          node apps/worker/scripts/check-config.mjs ${{ inputs.environment }}
+      - run: pnpm typecheck
+      - run: pnpm --filter @eko/web build
+      - run: pnpm test
+      - name: Migrations D1
+        working-directory: apps/worker
+        run: pnpm exec wrangler d1 migrations apply DB --remote --env ${{ inputs.environment }}
+      - name: Déploiement du Worker
+        working-directory: apps/worker
+        run: pnpm exec wrangler deploy --env ${{ inputs.environment }}

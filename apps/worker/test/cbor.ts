@@ -1,5 +1,5 @@
 /** Encodeur CBOR minimal (entiers, octets, textes, tableaux, objets) pour simuler un authentificateur. */
-type CborValue = number | string | Uint8Array | CborValue[] | Map<CborValue, CborValue>;
+type CborValue = number | string | Uint8Array | CborValue[] | Map<number | string, CborValue>;
 
 function header(major: number, length: number): number[] {
   const m = major << 5;

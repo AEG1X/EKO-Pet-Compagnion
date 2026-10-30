@@ -171,3 +171,20 @@ describe('gestion des passkeys', () => {
     expect((await client.delete(`/api/passkeys/${encodeURIComponent(first.id)}`)).status).toBe(200);
   });
 });
+
+describe('procédure d’urgence', () => {
+  it('effacer les passkeys rouvre la configuration en conservant le compte et ses réglages', async () => {
+    const { client } = await setupOwner();
+    await client.patch('/api/settings', { accent: 'miel' });
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM passkey'),
+      env.DB.prepare('DELETE FROM session'),
+      env.DB.prepare('DELETE FROM recovery_code'),
+    ]);
+    expect(await (await new TestClient().get('/api/auth/setup/status')).json()).toEqual({ needsSetup: true });
+    const again = await setupOwner();
+    expect(await (await again.client.get('/api/me')).json()).toMatchObject({ settings: { accent: 'miel' } });
+    const owners = await env.DB.prepare('SELECT COUNT(*) AS n FROM owner').first<{ n: number }>();
+    expect(owners?.n).toBe(1);
+  });
+});
