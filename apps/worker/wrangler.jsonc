@@ -44,7 +44,7 @@
         {
           "binding": "DB",
           "database_name": "eko-staging",
-          "database_id": "REMPLACER_PAR_ID_D1_STAGING",
+          "database_id": "fb9031de-c1a1-4440-8372-a0c5a738d6a9",
           "migrations_dir": "migrations"
         }
       ]
@@ -64,7 +64,7 @@
         {
           "binding": "DB",
           "database_name": "eko-prod",
-          "database_id": "REMPLACER_PAR_ID_D1_PRODUCTION",
+          "database_id": "17a3f8a1-7b80-4c3c-9a6a-8265e4c973b6",
           "migrations_dir": "migrations"
         }
       ]
