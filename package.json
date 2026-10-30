@@ -1,0 +1,15 @@
+{
+  "name": "eko-pet-companion",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm --filter @eko/web build && pnpm --filter @eko/worker dev",
+    "dev:web": "pnpm --filter @eko/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "check": "pnpm typecheck && pnpm test && pnpm build"
+  }
+}

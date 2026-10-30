@@ -1,0 +1,70 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Un seul Worker sert l'application (assets statiques), l'API et, plus tard,
+  // la fiche publique de la médaille. Voir docs/decisions/0001-worker-unique.md.
+  "name": "eko-dev",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // Le Worker voit toutes les requêtes pour appliquer partout les mêmes en-têtes de sécurité.
+    "run_worker_first": true
+  },
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["0 3 * * *"] },
+  "vars": {
+    "ENVIRONMENT": "development",
+    "RP_ID": "localhost",
+    "RP_NAME": "EKO",
+    "ORIGIN": "http://localhost:8787"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "eko-dev",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "env": {
+    "staging": {
+      "name": "eko-staging",
+      "triggers": { "crons": ["0 3 * * *"] },
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "RP_ID": "REMPLACER_PAR_DOMAINE_STAGING",
+        "RP_NAME": "EKO (test)",
+        "ORIGIN": "https://REMPLACER_PAR_DOMAINE_STAGING"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "eko-staging",
+          "database_id": "REMPLACER_PAR_ID_D1_STAGING",
+          "migrations_dir": "migrations"
+        }
+      ]
+    },
+    "production": {
+      "name": "eko",
+      "triggers": { "crons": ["0 3 * * *"] },
+      "vars": {
+        "ENVIRONMENT": "production",
+        "RP_ID": "REMPLACER_PAR_DOMAINE",
+        "RP_NAME": "EKO",
+        "ORIGIN": "https://REMPLACER_PAR_DOMAINE"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "eko-prod",
+          "database_id": "REMPLACER_PAR_ID_D1_PRODUCTION",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}

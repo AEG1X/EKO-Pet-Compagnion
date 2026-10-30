@@ -1,0 +1,18 @@
+import { describe, expect, it } from 'vitest';
+import { setupOwner } from './client';
+
+describe('réglages', () => {
+  it('enregistre le thème, l’accent et l’ordre des sections', async () => {
+    const { client } = await setupOwner();
+    const order = ['souvenirs', 'sante', 'alimentation', 'education', 'depenses', 'documents'];
+    const res = await client.patch('/api/settings', { theme: 'dark', accent: 'lac', sectionOrder: order });
+    expect(res.status).toBe(200);
+    expect(await (await client.get('/api/settings')).json()).toEqual({ theme: 'dark', accent: 'lac', sectionOrder: order });
+  });
+
+  it('refuse une valeur inconnue', async () => {
+    const { client } = await setupOwner();
+    expect((await client.patch('/api/settings', { accent: 'fuchsia' })).status).toBe(400);
+    expect((await client.patch('/api/settings', { sectionOrder: ['sante'] })).status).toBe(400);
+  });
+});
