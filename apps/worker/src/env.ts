@@ -3,6 +3,8 @@ import type { SessionContext } from './auth/session';
 
 export interface Env {
   DB: D1Database;
+  /** Bucket R2 privé : documents et photo du profil. */
+  FILES: R2Bucket;
   ASSETS: Fetcher;
   ENVIRONMENT: 'development' | 'test' | 'staging' | 'production';
   /** Domaine utilisé par WebAuthn (sans protocole ni port). */

@@ -29,13 +29,23 @@ openssl rand -base64 24 | pnpm exec wrangler secret put SETUP_TOKEN --env stagin
 Note le `SETUP_TOKEN` : il sert une seule fois, au premier écran d'EKO. Le `PIN_PEPPER` ne doit **jamais** changer, sinon le PIN devra être redéfini.
 Même chose avec `--env production`, avec des valeurs différentes.
 
-## 3. Garde-fous de coût
+## 3. Stockage R2
+
+À faire une fois, avant le premier déploiement qui contient la phase A2.4 :
+
+1. Tableau de bord Cloudflare → **R2 Object Storage** → activer R2 (la carte est demandée ; l'offre gratuite couvre 10 Go et 1 million d'écritures par mois).
+2. Créer deux buckets, région automatique, **sans** accès public ni domaine personnalisé : `eko-files-staging` et `eko-files`.
+3. **Notifications** → ajouter une alerte de facturation à l'usage, pour être prévenu au premier centime.
+
+Le token d'API du déploiement n'a pas besoin de droit R2 : le Worker accède au bucket par son binding `FILES` (voir `wrangler.jsonc`).
+
+## 4. Garde-fous de coût
 
 - Le Worker et D1 restent dans l'offre gratuite (100 000 requêtes/jour, 5 Go de D1) : au-delà, les requêtes sont refusées, pas facturées.
-- Aucun service payant n'est activé par ce dépôt. R2 arrivera en phase A2 avec ses propres plafonds applicatifs (alerte à 8 Go, blocage à 9 Go).
+- R2 (documents et photo du profil) est le seul service qui facture au-delà de l'offre gratuite (10 Go), sans plafond côté Cloudflare. EKO applique donc ses propres plafonds : avertissement dans l'app dès 8 Go, refus de tout envoi qui dépasserait 9 Go, 20 Mo maximum par fichier.
 - Garde l'alerte de facturation Cloudflare active (Notifications).
 
-## 4. Vérifier un déploiement
+## 5. Vérifier un déploiement
 
 - `https://<domaine>/api/health` répond `{"ok":true}`.
 - Les en-têtes de sécurité sont présents : `curl -sI https://<domaine>/ | grep -i content-security-policy`.

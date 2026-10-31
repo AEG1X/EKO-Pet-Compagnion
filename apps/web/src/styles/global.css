@@ -849,3 +849,82 @@ select.input {
 h3.eyebrow {
   margin: 8px 0 0;
 }
+
+/* ---------- Photo du profil ---------- */
+.avatar {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--hero-text) 14%, transparent);
+  border: 2px solid color-mix(in srgb, var(--hero-text) 55%, transparent);
+  color: var(--hero-text);
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.hero {
+  gap: 16px;
+}
+.hero .btn-secondary {
+  color: var(--text);
+}
+.hero .btn-ghost {
+  color: var(--hero-text);
+  border-color: color-mix(in srgb, var(--hero-text) 45%, transparent);
+}
+
+/* ---------- Documents ---------- */
+.doc-link {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: inherit;
+  text-decoration: none;
+}
+.doc-link:hover strong {
+  text-decoration: underline;
+}
+.doc-link strong {
+  overflow-wrap: break-word;
+}
+/* Sur téléphone, les trois actions passent sous le document pour laisser la place au titre. */
+@media (max-width: 559px) {
+  .doc-item {
+    flex-wrap: wrap;
+  }
+  .doc-item .doc-link {
+    flex-basis: 100%;
+  }
+  .doc-item .contact-actions {
+    margin-left: auto;
+  }
+}
+.meter {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+.meter-warn .meter-fill {
+  background: var(--danger);
+}

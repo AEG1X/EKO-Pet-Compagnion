@@ -4,6 +4,7 @@ import { Icon, Paw } from '../../components/Icon';
 import { errorMessage } from '../../lib/api';
 import { Contacts } from './Contacts';
 import { DogForm } from './DogForm';
+import { DogAvatar, DogPhotoControls } from './DogPhoto';
 import { useDog } from './queries';
 
 /** « de Max », mais « d’Eko » : élision devant une voyelle ou un h muet. */
@@ -37,13 +38,14 @@ function DogDetails({ dog, onEdit }: { dog: Dog; onEdit: () => void }) {
         <span className="hero-paw">
           <Paw size={180} />
         </span>
-        <p className="eyebrow" style={{ color: 'inherit', opacity: 0.8 }}>
-          Photo à venir
-        </p>
-        <div>
-          <p className="hero-name">{dog.name}</p>
-          <p>{dogSubtitle(dog) || 'Profil à compléter'}</p>
+        <div className="hero-identity">
+          <DogAvatar dog={dog} size={96} />
+          <div>
+            <p className="hero-name">{dog.name}</p>
+            <p>{dogSubtitle(dog) || 'Profil à compléter'}</p>
+          </div>
         </div>
+        <DogPhotoControls dog={dog} />
       </section>
 
       <section className="card stack" aria-labelledby="identity-title">
@@ -115,7 +117,6 @@ export function ProfilePage() {
           <>
             <DogDetails dog={dog.data} onEdit={() => setEditing(true)} />
             <Contacts />
-            <p className="hint">La photo de profil et les documents arrivent à l’étape 4 de la phase A2.</p>
           </>
         ))}
     </div>

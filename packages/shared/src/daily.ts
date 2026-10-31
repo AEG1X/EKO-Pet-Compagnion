@@ -1,32 +1,6 @@
 import { z } from 'zod';
 import { isoDateSchema } from './dog';
-
-function optionalText(max: number) {
-  return z
-    .string()
-    .trim()
-    .max(max, `${max} caractères maximum`)
-    .nullable()
-    .optional()
-    .transform((value) => (value ? value : null));
-}
-
-const optionalDate = isoDateSchema
-  .or(z.literal(''))
-  .nullable()
-  .optional()
-  .transform((value) => value || null);
-
-const optionalId = z
-  .string()
-  .max(64)
-  .nullable()
-  .optional()
-  .transform((value) => value || null);
-
-function optionalInt(min: number, max: number, message: string) {
-  return z.number().int(message).min(min, message).max(max, message).nullable().optional().transform((v) => v ?? null);
-}
+import { optionalDate, optionalId, optionalInt, optionalText } from './fields';
 
 // ---------------------------------------------------------------- Alimentation
 

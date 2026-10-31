@@ -1,4 +1,4 @@
-import type { ApiError as ApiErrorBody } from '@eko/shared';
+import type { ApiError as ApiErrorBody, StoredFile } from '@eko/shared';
 
 export class ApiError extends Error {
   constructor(
@@ -23,14 +23,29 @@ export function onAuthError(listener: Listener): () => void {
 
 export async function api<T>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const { method = 'GET', body } = options;
+  return send<T>(path, {
+    method,
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    body: body === undefined ? null : JSON.stringify(body),
+  });
+}
+
+/** Envoie un fichier brut au Worker (PUT /api/files) ; il reste en attente jusqu'à son rattachement. */
+export function uploadFile(file: Blob, name?: string): Promise<StoredFile> {
+  return send<StoredFile>('/files', {
+    method: 'PUT',
+    headers: {
+      'content-type': file.type || 'application/octet-stream',
+      ...(name ? { 'x-file-name': encodeURIComponent(name) } : {}),
+    },
+    body: file,
+  });
+}
+
+async function send<T>(path: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, {
-      method,
-      credentials: 'same-origin',
-      headers: body === undefined ? {} : { 'content-type': 'application/json' },
-      body: body === undefined ? null : JSON.stringify(body),
-    });
+    res = await fetch(`/api${path}`, { ...init, credentials: 'same-origin' });
   } catch {
     throw new ApiError(0, 'network', 'Connexion impossible. Vérifie ton réseau puis réessaie.');
   }

@@ -4,6 +4,8 @@ import { useOwner } from '../../app/AppGate';
 import { Icon, type IconName, Paw } from '../../components/Icon';
 import { dogSubtitle } from '../profile/ProfilePage';
 import { useDog } from '../profile/queries';
+import { DogAvatar } from '../profile/DogPhoto';
+import { documents } from '../documents/queries';
 import { useHealthEvents } from '../health/queries';
 import { upcomingDue } from '../health/upcoming';
 import { expenses, feedingPlans, skills } from '../daily/queries';
@@ -41,6 +43,7 @@ export function Dashboard() {
   const acquired = skillList.data?.filter((s) => s.status === 'acquis').length ?? 0;
   const learning = skillList.data?.filter((s) => s.status === 'en_cours').length ?? 0;
   const monthSpent = totalFor(expenseList.data ?? [], today.slice(0, 7));
+  const docList = documents.useList();
 
   /** Résumé réel de chaque section, ou le texte d'attente tant qu'elle est vide. */
   function summary(id: DashboardSection): string {
@@ -55,6 +58,11 @@ export function Dashboard() {
           : SECTIONS.education.empty;
       case 'depenses':
         return expenseList.data?.length ? `${formatEuros(monthSpent)} ce mois-ci` : SECTIONS.depenses.empty;
+      case 'documents': {
+        const count = docList.data?.length ?? 0;
+        if (count === 0) return SECTIONS.documents.empty;
+        return `${count} document${count > 1 ? 's' : ''} · dernier : ${docList.data![0]!.title}`;
+      }
       default:
         return SECTIONS[id].empty;
     }
@@ -79,14 +87,14 @@ export function Dashboard() {
         <span className="hero-paw">
           <Paw size={180} />
         </span>
-        <p className="eyebrow" style={{ color: 'inherit', opacity: 0.8 }}>
-          Photo de couverture à venir
-        </p>
-        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           {dog.data ? (
-            <div>
-              <p className="hero-name">{dog.data.name}</p>
-              <p>{dogSubtitle(dog.data)}</p>
+            <div className="hero-identity">
+              <DogAvatar dog={dog.data} size={72} />
+              <div>
+                <p className="hero-name">{dog.data.name}</p>
+                <p>{dogSubtitle(dog.data)}</p>
+              </div>
             </div>
           ) : (
             <div>
@@ -94,7 +102,7 @@ export function Dashboard() {
               <p>{dog.isPending ? '\u00a0' : 'Commence par créer le profil de ton chien.'}</p>
             </div>
           )}
-          <Link to="/profil" className="btn btn-secondary" style={{ color: 'var(--text)' }}>
+          <Link to="/profil" className="btn btn-secondary">
             {dog.isSuccess && !dog.data ? 'Créer le profil' : 'Voir le profil'}
           </Link>
         </div>

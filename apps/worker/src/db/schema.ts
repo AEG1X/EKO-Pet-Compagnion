@@ -13,6 +13,30 @@ export const owner = sqliteTable('owner', {
   createdAt: integer('created_at').notNull(),
 });
 
+/**
+ * Fichier stocké dans R2 (clé = files/<propriétaire>/<id>). Les tailles servent aux plafonds
+ * applicatifs du stockage. « pending » : envoyé mais pas encore rattaché (purgé après 24 h).
+ */
+export const storedFile = sqliteTable(
+  'stored_file',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    r2Key: text('r2_key').notNull(),
+    contentType: text('content_type', {
+      enum: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+    }).notNull(),
+    size: integer('size').notNull(),
+    /** Nom d'origine, affiché au téléchargement. */
+    name: text('name'),
+    purpose: text('purpose', { enum: ['pending', 'document', 'photo'] }).notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [index('stored_file_owner_idx').on(t.ownerId, t.purpose)],
+);
+
 export const passkey = sqliteTable(
   'passkey',
   {
@@ -139,6 +163,7 @@ export const dog = sqliteTable(
     address: text('address'),
     area: text('area'),
     notes: text('notes'),
+    photoFileId: text('photo_file_id').references(() => storedFile.id, { onDelete: 'set null' }),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at').notNull(),
   },
@@ -298,4 +323,28 @@ export const expense = sqliteTable(
     updatedAt: integer('updated_at').notNull(),
   },
   (t) => [index('expense_dog_date_idx').on(t.dogId, t.date)],
+);
+
+export const document = sqliteTable(
+  'document',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    /** Le fichier est supprimé de R2 par la route qui supprime le document. */
+    fileId: text('file_id')
+      .notNull()
+      .references(() => storedFile.id),
+    category: text('category', {
+      enum: ['ordonnance', 'analyse', 'compte_rendu', 'facture', 'assurance', 'identification', 'certificat', 'autre'],
+    }).notNull(),
+    title: text('title').notNull(),
+    date: text('date').notNull(),
+    healthEventId: text('health_event_id').references(() => healthEvent.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('document_dog_date_idx').on(t.dogId, t.date), uniqueIndex('document_file_idx').on(t.fileId)],
 );
