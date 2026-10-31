@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Script d'enregistrement en fichier séparé : compatible avec la CSP sans script inline.
       injectRegister: 'script',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'theme-init.js'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'theme-init.js', 'push-sw.js'],
       manifest: {
         name: 'EKO — Pet Companion',
         short_name: 'EKO',
@@ -33,6 +33,8 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api\//, /^\/m\//, /^\/cal\//, /^\/s\//],
         runtimeCaching: [],
         cleanupOutdatedCaches: true,
+        // Réception des notifications Web Push et ouverture de la page au toucher.
+        importScripts: ['push-sw.js'],
       },
     }),
   ],

@@ -6,3 +6,4 @@ export * from './fields';
 export * from './daily';
 export * from './documents';
 export * from './reminders';
+export * from './notifications';

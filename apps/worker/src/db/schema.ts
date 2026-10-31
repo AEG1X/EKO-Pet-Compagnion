@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
  * Horodatages en millisecondes depuis l'époque Unix (UTC).
@@ -386,3 +386,47 @@ export const calendarFeed = sqliteTable('calendar_feed', {
   createdAt: integer('created_at').notNull(),
   lastUsedAt: integer('last_used_at'),
 });
+
+/** Appareils abonnés aux notifications Web Push. */
+export const pushSubscription = sqliteTable(
+  'push_subscription',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    label: text('label').notNull(),
+    createdAt: integer('created_at').notNull(),
+    lastSuccessAt: integer('last_success_at'),
+  },
+  (t) => [index('push_subscription_owner_idx').on(t.ownerId)],
+);
+
+/** Conversation Telegram liée (canal de secours), ou code de liaison en attente. */
+export const telegramLink = sqliteTable('telegram_link', {
+  ownerId: text('owner_id')
+    .primaryKey()
+    .references(() => owner.id, { onDelete: 'cascade' }),
+  chatId: text('chat_id'),
+  linkCode: text('link_code'),
+  linkCodeExpiresAt: integer('link_code_expires_at'),
+  linkedAt: integer('linked_at'),
+});
+
+/** Récapitulatifs quotidiens déjà envoyés : un seul par jour, même si la tâche planifiée se répète. */
+export const notificationRun = sqliteTable(
+  'notification_run',
+  {
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(),
+    sentAt: integer('sent_at').notNull(),
+    /** Canaux effectivement utilisés, ex. « push:2 telegram ». */
+    summary: text('summary').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.ownerId, t.day] })],
+);

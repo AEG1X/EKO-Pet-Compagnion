@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useOwner } from '../../app/AppGate';
 import { PinSetupForm } from '../../auth/PinSetupScreen';
 import { RecoveryCodes } from '../../auth/RecoveryCodes';
+import { Notifications } from './Notifications';
 import { meKey } from '../../auth/queries';
 import { Icon } from '../../components/Icon';
 import { api, errorMessage } from '../../lib/api';
@@ -312,6 +313,7 @@ export function SettingsPage() {
         <h1>Réglages</h1>
       </header>
       <Appearance />
+      <Notifications />
       <Security />
     </div>
   );
