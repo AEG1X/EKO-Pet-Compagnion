@@ -40,6 +40,11 @@ Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `S
 - Un appareil que le navigateur a désabonné est oublié au premier envoi refusé.
 - Telegram ne reçoit que le texte du récapitulatif (titres et dates des rappels). Le jeton du bot reste un secret du Worker ; la conversation se relie par un code à usage unique valable 15 minutes.
 
+## Sauvegardes
+
+- Les routes `/api/backup/*` n'existent que si le secret `BACKUP_TOKEN` est défini. Elles ne servent qu'à lire, avec ce jeton (comparaison à durée constante), un débit limité et une trace de chaque export dans le journal.
+- L'archive restic est chiffrée sur le Pi ; le mot de passe restic doit aussi être conservé hors du Pi.
+
 ## Signaler un problème
 
 Toute faille supposée se traite en priorité, avant toute nouvelle fonctionnalité.

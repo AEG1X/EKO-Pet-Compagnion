@@ -40,7 +40,12 @@ function Appearance() {
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: meKey }),
   });
-  const { theme, accent, sectionOrder } = me.settings;
+  const { theme, accent, sectionOrder, hiddenSections } = me.settings;
+
+  function toggle(id: DashboardSection) {
+    const hidden = hiddenSections.includes(id) ? hiddenSections.filter((h) => h !== id) : [...hiddenSections, id];
+    save.mutate({ hiddenSections: hidden });
+  }
 
   function move(index: number, delta: -1 | 1) {
     const next = [...sectionOrder];
@@ -84,11 +89,15 @@ function Appearance() {
         </div>
       </div>
       <div className="stack" style={{ gap: 8 }}>
-        <span className="eyebrow">Ordre des sections du tableau de bord</span>
+        <span className="eyebrow">Sections du tableau de bord</span>
+        <span className="hint">Choisis lesquelles afficher et dans quel ordre. Une section masquée reste accessible par le menu.</span>
         <ol className="list">
           {sectionOrder.map((id, index) => (
             <li key={id} className="list-item">
-              <span style={{ flexGrow: 1, fontWeight: 600 }}>{SECTION_LABELS[id]}</span>
+              <label className="check" style={{ flexGrow: 1, fontWeight: 600 }}>
+                <input type="checkbox" checked={!hiddenSections.includes(id)} onChange={() => toggle(id)} />
+                <span className={hiddenSections.includes(id) ? 'muted' : undefined}>{SECTION_LABELS[id]}</span>
+              </label>
               <button
                 type="button"
                 className="icon-btn"

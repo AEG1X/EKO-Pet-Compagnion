@@ -9,10 +9,17 @@ export const sectionOrderSchema = z
   .length(DASHBOARD_SECTIONS.length)
   .refine((list) => new Set(list).size === list.length, 'Sections en double');
 
+/** Sections masquées du tableau de bord (elles restent accessibles par le menu). */
+export const hiddenSectionsSchema = z
+  .array(z.enum(DASHBOARD_SECTIONS))
+  .max(DASHBOARD_SECTIONS.length)
+  .refine((list) => new Set(list).size === list.length, 'Sections en double');
+
 export const settingsSchema = z.object({
   theme: themeSchema,
   accent: z.enum(ACCENT_IDS),
   sectionOrder: sectionOrderSchema,
+  hiddenSections: hiddenSectionsSchema,
 });
 export type Settings = z.infer<typeof settingsSchema>;
 

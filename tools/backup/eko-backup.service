@@ -1,0 +1,14 @@
+[Unit]
+Description=Sauvegarde d'EKO (base et fichiers)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/eko-backup.sh
+Nice=10
+# Durcissement : le script n'écrit que dans son dossier et le dépôt restic.
+ProtectSystem=strict
+ReadWritePaths=/var/lib/eko-backup /srv/eko-restic
+PrivateTmp=true
+NoNewPrivileges=true
