@@ -5,3 +5,4 @@ export * from './health';
 export * from './fields';
 export * from './daily';
 export * from './documents';
+export * from './reminders';

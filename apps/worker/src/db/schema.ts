@@ -348,3 +348,41 @@ export const document = sqliteTable(
   },
   (t) => [index('document_dog_date_idx').on(t.dogId, t.date), uniqueIndex('document_file_idx').on(t.fileId)],
 );
+
+export const reminder = sqliteTable(
+  'reminder',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    kind: text('kind', {
+      enum: ['rendez_vous', 'sante', 'toilettage', 'education', 'administratif', 'autre'],
+    }).notNull(),
+    /** Prochaine occurrence, AAAA-MM-JJ. Un rappel récurrent avance à l'occurrence suivante quand il est fait. */
+    date: text('date').notNull(),
+    /** Heure locale HH:MM (Europe/Paris), ou null pour toute la journée. */
+    time: text('time'),
+    recurrence: text('recurrence', { enum: ['none', 'daily', 'weekly', 'monthly', 'yearly'] }).notNull(),
+    notifyDaysBefore: integer('notify_days_before').notNull().default(1),
+    healthEventId: text('health_event_id').references(() => healthEvent.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    /** Rappel ponctuel fait : date à laquelle il a été coché. */
+    doneDate: text('done_date'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('reminder_dog_date_idx').on(t.dogId, t.date)],
+);
+
+/** Lien d'abonnement au calendrier (Apple Calendrier, Google Agenda) : un seul par propriétaire, révocable. */
+export const calendarFeed = sqliteTable('calendar_feed', {
+  ownerId: text('owner_id')
+    .primaryKey()
+    .references(() => owner.id, { onDelete: 'cascade' }),
+  /** SHA-256 du jeton : le jeton lui-même n'apparaît que dans l'adresse donnée une fois au propriétaire. */
+  tokenHash: text('token_hash').notNull().unique(),
+  createdAt: integer('created_at').notNull(),
+  lastUsedAt: integer('last_used_at'),
+});

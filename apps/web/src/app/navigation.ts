@@ -14,7 +14,7 @@ export const NAV: NavEntry[] = [
   { to: '/', label: 'Tableau de bord', icon: 'home' },
   { to: '/profil', label: 'Profil d’Eko', icon: 'user' },
   { to: '/sante', label: 'Santé', icon: 'heart' },
-  { to: '/calendrier', label: 'Calendrier', icon: 'calendar', phase: 'A2', description: 'Échéances, rappels, export .ics et abonnement Apple Calendrier.' },
+  { to: '/calendrier', label: 'Calendrier', icon: 'calendar' },
   { to: '/alimentation', label: 'Alimentation', icon: 'bowl' },
   { to: '/education', label: 'Éducation', icon: 'cap' },
   { to: '/souvenirs', label: 'Souvenirs', icon: 'image', phase: 'B', description: 'Photos, vidéos, albums et timeline.' },

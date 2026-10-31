@@ -7,11 +7,12 @@ import { useDog } from '../profile/queries';
 import { DogAvatar } from '../profile/DogPhoto';
 import { documents } from '../documents/queries';
 import { useHealthEvents } from '../health/queries';
-import { upcomingDue } from '../health/upcoming';
+import { agendaItems } from '../calendar/agenda';
+import { reminders } from '../calendar/queries';
 import { expenses, feedingPlans, skills } from '../daily/queries';
 import { describeRation } from '../daily/FeedingPage';
 import { totalFor } from '../daily/ExpensesPage';
-import { formatEuros } from '@eko/shared';
+import { addDays, formatEuros } from '@eko/shared';
 import { daysUntil, formatDate, relativeDays, todayIso } from '../../lib/dates';
 
 const SECTIONS: Record<DashboardSection, { label: string; icon: IconName; to: string; empty: string }> = {
@@ -33,7 +34,9 @@ export function Dashboard() {
   const me = useOwner();
   const dog = useDog();
   const events = useHealthEvents();
-  const next = upcomingDue(events.data ?? [])[0];
+  const reminderList = reminders.useList();
+  // Prochain élément de l'agenda : rappel (même en retard) ou échéance de santé.
+  const next = agendaItems(reminderList.data ?? [], events.data ?? [], todayIso(), addDays(todayIso(), 365), todayIso(), { includeOverdue: true })[0];
   const lastCare = events.data?.[0];
   const plans = feedingPlans.useList();
   const skillList = skills.useList();
@@ -118,14 +121,15 @@ export function Dashboard() {
               Prochaine échéance
             </h2>
             {next ? (
-              <Link to="/sante" className="stack" style={{ gap: 2, textDecoration: 'none' }}>
+              <Link to="/calendrier" className="stack" style={{ gap: 2, textDecoration: 'none' }}>
                 <strong>{next.title}</strong>
-                <span className={daysUntil(next.nextDueDate!) < 0 ? 'due due-late' : 'due'}>
-                  {formatDate(next.nextDueDate!)} · {relativeDays(next.nextDueDate!)}
+                <span className={daysUntil(next.date) < 0 ? 'due due-late' : 'due'}>
+                  {formatDate(next.date)}
+                  {next.time ? ` à ${next.time.replace(':', ' h ')}` : ''} · {relativeDays(next.date)}
                 </span>
               </Link>
             ) : (
-              <p className="muted">Les rappels de santé et les rendez-vous apparaîtront ici.</p>
+              <p className="muted">Les rappels et les échéances de santé apparaîtront ici.</p>
             )}
           </div>
         </div>
