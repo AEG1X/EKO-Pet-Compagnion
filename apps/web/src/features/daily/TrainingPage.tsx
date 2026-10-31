@@ -116,7 +116,16 @@ function toInt(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function SessionForm({ session, onDone }: { session?: TrainingSession; onDone: () => void }) {
+export function SessionForm({
+  session,
+  onDone,
+  onSaved,
+}: {
+  session?: TrainingSession;
+  onDone: () => void;
+  /** Appelé après l'enregistrement à la place de onDone (ajout rapide). */
+  onSaved?: () => void;
+}) {
   const save = trainingSessions.useSave();
   const skillList = skills.useList();
   const [form, setForm] = useState({
@@ -130,7 +139,7 @@ function SessionForm({ session, onDone }: { session?: TrainingSession; onDone: (
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    save.mutate({ id: session?.id, input: { ...form, durationMinutes: toInt(form.durationMinutes) } }, { onSuccess: onDone });
+    save.mutate({ id: session?.id, input: { ...form, durationMinutes: toInt(form.durationMinutes) } }, { onSuccess: onSaved ?? onDone });
   }
 
   return (
