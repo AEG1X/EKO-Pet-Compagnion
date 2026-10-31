@@ -115,6 +115,8 @@ export interface Memory {
   url: string;
   /** Aperçu léger ; null si le navigateur n'a pas pu le créer (ex. HEIC hors Safari). */
   previewUrl: string | null;
+  /** Albums qui contiennent ce souvenir. */
+  albumIds: string[];
   createdAt: string;
 }
 

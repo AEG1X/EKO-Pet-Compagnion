@@ -14,6 +14,7 @@ import { type Db, schema } from '../db/client';
 import type { AppEnv, Env } from '../env';
 import { randomId, randomToken } from '../lib/crypto';
 import { digestMessage, dueToday } from '../lib/digest';
+import { momentsFor } from './albums';
 import { apiError } from '../lib/errors';
 import { botUsername, findChatForCode, sendTelegram } from '../lib/telegram';
 import { readJson } from '../lib/validate';
@@ -108,8 +109,12 @@ export async function sendDailyDigests(env: Env, db: Db, now = new Date(), fetch
       await db.select().from(schema.healthEvent).where(eq(schema.healthEvent.dogId, dog.id))
     ).map((e) => ({ ...e, contactName: null })) as HealthEvent[];
     const items = dueToday(reminders, events, today);
-    if (items.length === 0) continue;
-    const result = await deliver(env, db, ownerId, digestMessage(items, today, dog.name), fetcher);
+    // Rappels souvenirs : anniversaire, âge en mois, dates spéciales, « ce jour-là ».
+    const moments = (await momentsFor(db, dog, today)).today.map((m) => ({ date: today, time: null, title: m.title }));
+    if (items.length + moments.length === 0) continue;
+    const message = digestMessage([...items, ...moments], today, dog.name);
+    if (items.length === 0) message.url = '/souvenirs';
+    const result = await deliver(env, db, ownerId, message, fetcher);
     await db.insert(schema.notificationRun).values({
       ownerId,
       day: today,

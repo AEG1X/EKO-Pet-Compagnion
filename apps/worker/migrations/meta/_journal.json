@@ -78,6 +78,13 @@
       "when": 1793468028347,
       "tag": "0010_souvenirs",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793470996565,
+      "tag": "0011_albums_partage",
+      "breakpoints": true
     }
   ]
 }

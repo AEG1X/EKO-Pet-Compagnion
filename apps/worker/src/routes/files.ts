@@ -19,14 +19,12 @@ import { type Db, schema } from '../db/client';
 import type { AppEnv, Env } from '../env';
 import { checkSameDog } from '../lib/crud';
 import { randomId } from '../lib/crypto';
+import { serveStoredFile } from '../lib/http';
 import { apiError } from '../lib/errors';
 import { readJson } from '../lib/validate';
 import { findDog, requireDog, toDog } from './dog';
 
 type FileRow = typeof schema.storedFile.$inferSelect;
-
-/** Politique de sécurité propre aux fichiers servis : aucun script, aucun cadre. */
-export const FILE_CSP = "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; object-src 'self'; frame-ancestors 'none'";
 
 export function toFile(row: FileRow): StoredFile {
   return { id: row.id, name: row.name, contentType: row.contentType, size: row.size };
@@ -57,13 +55,6 @@ export function cleanFileName(header: string | undefined): string | null {
     .trim()
     .slice(0, 120);
   return name || null;
-}
-
-/** En-tête Content-Disposition avec un nom compatible ASCII et sa version UTF-8. */
-export function disposition(kind: 'inline' | 'attachment', name: string | null): string {
-  if (!name) return kind;
-  const ascii = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
-  return `${kind}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
 
 /** Fichier du propriétaire, ou 404 : un fichier d'un autre compte est traité comme inexistant. */
@@ -192,27 +183,9 @@ export const fileRoutes = new Hono<AppEnv>()
   // Lecture d'un fichier : uniquement par son propriétaire, jamais mis en cache partagé.
   .get('/files/:id', async (c) => {
     const row = await ownFile(c.get('db'), c.get('session').ownerId, c.req.param('id'));
-    // Lecture partielle (Range) : indispensable pour lire une vidéo dans Safari.
-    const wantsRange = /^bytes=\d*-\d*$/.test(c.req.header('range') ?? '');
-    const object = await c.env.FILES.get(row.r2Key, wantsRange ? { range: c.req.raw.headers } : undefined);
-    if (!object) throw apiError(404, 'not_found', 'Fichier introuvable.');
-    const kind = c.req.query('download') === '1' ? 'attachment' : 'inline';
-    const headers: Record<string, string> = {
-      'content-type': row.contentType,
-      'content-length': String(row.size),
-      'accept-ranges': 'bytes',
-      'content-disposition': disposition(kind, row.name),
-      'cache-control': 'private, no-store',
-      'content-security-policy': FILE_CSP,
-    };
-    const range = object.range as { offset?: number; length?: number } | undefined;
-    if (wantsRange && range && range.offset !== undefined) {
-      const length = range.length ?? row.size - range.offset;
-      headers['content-length'] = String(length);
-      headers['content-range'] = `bytes ${range.offset}-${range.offset + length - 1}/${row.size}`;
-      return new Response(object.body, { status: 206, headers });
-    }
-    return new Response(object.body, { headers });
+    const res = await serveStoredFile(c.env, c.req.raw, row, { download: c.req.query('download') === '1', cache: 'private, no-store' });
+    if (!res) throw apiError(404, 'not_found', 'Fichier introuvable.');
+    return res;
   })
 
   // Abandon d'un envoi qui ne sera pas rattaché (formulaire annulé).

@@ -10,3 +10,5 @@ export * from './notifications';
 export * from './medal';
 export * from './lost';
 export * from './memories';
+export * from './albums';
+export * from './zip';

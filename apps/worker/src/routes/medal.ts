@@ -21,7 +21,7 @@ import { RATE_LIMITS, enforceRateLimit } from '../security/rateLimit';
 import { readJson } from '../lib/validate';
 import { requireDog } from './dog';
 import { alertScan, currentEpisode, recordReport } from './lost';
-import { FILE_CSP } from './files';
+import { FILE_CSP, htmlResponse, runInBackground } from '../lib/http';
 
 type MedalRow = typeof schema.medal.$inferSelect;
 
@@ -190,26 +190,6 @@ export const medalRoutes = new Hono<AppEnv>()
 // ---------------------------------------------------------------- Fiche publique
 
 /** Tâche après réponse (compteur de visites, instantané) : ses erreurs ne gênent jamais l'affichage. */
-function runInBackground(c: Context<AppEnv>, task: Promise<unknown>) {
-  const safe = task.catch(() => undefined);
-  try {
-    c.executionCtx.waitUntil(safe);
-  } catch {
-    // Pas de contexte d'exécution (tests) : la tâche se termine d'elle-même.
-  }
-}
-
-function htmlResponse(html: string, status: number): Response {
-  return new Response(html, {
-    status,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      // Toujours relue : une désactivation doit prendre effet immédiatement.
-      'cache-control': 'no-store',
-    },
-  });
-}
-
 async function readSnapshot(env: Env, publicId: string): Promise<Snapshot | null> {
   const object = await env.FILES.get(snapshotKey(publicId));
   return object ? ((await object.json()) as Snapshot) : null;

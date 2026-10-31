@@ -538,3 +538,84 @@ export const memory = sqliteTable(
     uniqueIndex('memory_dog_hash_idx').on(t.dogId, t.contentHash),
   ],
 );
+
+/** Albums manuels : un souvenir peut figurer dans plusieurs albums. */
+export const album = sqliteTable(
+  'album',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    coverMemoryId: text('cover_memory_id').references(() => memory.id, { onDelete: 'set null' }),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('album_dog_idx').on(t.dogId)],
+);
+
+export const albumMemory = sqliteTable(
+  'album_memory',
+  {
+    albumId: text('album_id')
+      .notNull()
+      .references(() => album.id, { onDelete: 'cascade' }),
+    memoryId: text('memory_id')
+      .notNull()
+      .references(() => memory.id, { onDelete: 'cascade' }),
+    addedAt: integer('added_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.albumId, t.memoryId] }), index('album_memory_memory_idx').on(t.memoryId)],
+);
+
+/**
+ * Lien privé de consultation d'un album : jeton aléatoire de 128 bits, révocable, expiration facultative.
+ * Le jeton est gardé pour pouvoir recopier le lien ; la révocation le rend inutilisable.
+ */
+export const shareLink = sqliteTable(
+  'share_link',
+  {
+    id: text('id').primaryKey(),
+    albumId: text('album_id')
+      .notNull()
+      .references(() => album.id, { onDelete: 'cascade' }),
+    token: text('token').notNull().unique(),
+    label: text('label').notNull(),
+    allowDownload: integer('allow_download', { mode: 'boolean' }).notNull().default(false),
+    expiresAt: integer('expires_at'),
+    revokedAt: integer('revoked_at'),
+    createdAt: integer('created_at').notNull(),
+    lastViewedAt: integer('last_viewed_at'),
+    viewCount: integer('view_count').notNull().default(0),
+  },
+  (t) => [index('share_link_album_idx').on(t.albumId)],
+);
+
+/** Dates spéciales fêtées chaque année (arrivée à la maison, première balade…). */
+export const specialDate = sqliteTable(
+  'special_date',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    date: text('date').notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [index('special_date_dog_idx').on(t.dogId)],
+);
+
+/** Choix des rappels souvenirs (absent = tous activés). */
+export const memoryReminderSettings = sqliteTable('memory_reminder_settings', {
+  dogId: text('dog_id')
+    .primaryKey()
+    .references(() => dog.id, { onDelete: 'cascade' }),
+  birthday: integer('birthday', { mode: 'boolean' }).notNull(),
+  monthly: integer('monthly', { mode: 'boolean' }).notNull(),
+  onThisDay: integer('on_this_day', { mode: 'boolean' }).notNull(),
+  specialDates: integer('special_dates', { mode: 'boolean' }).notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});

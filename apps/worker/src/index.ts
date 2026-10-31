@@ -4,6 +4,7 @@ import { getDb } from './db/client';
 import type { AppEnv, Env } from './env';
 import { accountRoutes } from './routes/account';
 import { authRoutes, purgeExpiredAuthData } from './routes/auth';
+import { albumRoutes, publicShareRoutes } from './routes/albums';
 import { backupRoutes } from './routes/backup';
 import { dogRoutes } from './routes/dog';
 import { dailyRoutes } from './routes/daily';
@@ -42,7 +43,8 @@ const api = new Hono<AppEnv>()
   .route('/', notificationRoutes)
   .route('/', medalRoutes)
   .route('/', lostRoutes)
-  .route('/', memoryRoutes);
+  .route('/', memoryRoutes)
+  .route('/', albumRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {
@@ -56,6 +58,8 @@ app.route('/api', api);
 
 // Fiche publique de la médaille (QR et NFC) : rendue par le Worker, sans session.
 app.route('/', publicMedalRoutes);
+// Albums partagés par lien privé : lecture seule, sans session.
+app.route('/', publicShareRoutes);
 
 // Tout le reste : l'application React (fichiers statiques, repli sur index.html).
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
