@@ -1051,3 +1051,25 @@ h3.eyebrow {
 details > summary {
   cursor: pointer;
 }
+
+/* ---------- Ajout rapide ---------- */
+.quick-choice {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.quick-choice-text {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0;
+}
+li:last-child > .quick-choice {
+  border-bottom: none;
+}

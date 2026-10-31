@@ -24,7 +24,16 @@ function centsToInput(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',').replace(',00', '');
 }
 
-function ExpenseForm({ expense, onDone }: { expense?: Expense; onDone: () => void }) {
+export function ExpenseForm({
+  expense,
+  onDone,
+  onSaved,
+}: {
+  expense?: Expense;
+  onDone: () => void;
+  /** Appelé après l'enregistrement à la place de onDone (ajout rapide). */
+  onSaved?: () => void;
+}) {
   const save = expenses.useSave();
   const events = useHealthEvents();
   const [form, setForm] = useState({
@@ -50,7 +59,7 @@ function ExpenseForm({ expense, onDone }: { expense?: Expense; onDone: () => voi
     const { amount: _amount, ...rest } = form;
     save.mutate(
       { id: expense?.id, input: { ...rest, amountCents, healthEventId: form.category === 'sante' ? form.healthEventId : null } },
-      { onSuccess: onDone },
+      { onSuccess: onSaved ?? onDone },
     );
   }
 
