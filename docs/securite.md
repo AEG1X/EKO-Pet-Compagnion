@@ -51,6 +51,7 @@ Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `S
 - Une adresse inconnue et une adresse révoquée donnent la même réponse.
 - La fiche n'affiche que ce que le propriétaire a coché. L'adresse, le numéro de puce, le passeport, les notes et les documents ne sont jamais publiés, quels que soient les réglages.
 - Le numéro de téléphone est masqué par défaut, avec un avertissement à l'activation.
+- Le propriétaire peut afficher les photos d'un album choisi : au plus 12 aperçus (jamais les originaux), servis par `/m/<identifiant>/souvenir/<id>` seulement s'ils font partie de cet album. Hors mode perdu, la fiche les met en avant et garde un contact discret en bas de page.
 - La page est rendue par le Worker, sans JavaScript, avec la même CSP stricte et `noindex`. Seuls le nombre de visites et la date de la dernière sont enregistrés, sans adresse IP.
 
 ## Mode perdu et signalements

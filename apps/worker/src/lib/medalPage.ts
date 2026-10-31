@@ -79,7 +79,32 @@ function reportForm(name: string, action: string): string {
 </section>`;
 }
 
-export function renderMedalPage(medal: PublicMedal, photoUrl: string | null, reportAction: string | null = null): string {
+/** Photos de l'album choisi (aperçus), en grille. */
+function gallery(medal: PublicMedal, galleryBase: string | null, title: string): string {
+  if (!galleryBase || medal.gallery.length === 0) return '';
+  const items = medal.gallery
+    .map((id) => `<li><img src="${escapeHtml(galleryBase + id)}" alt="" loading="lazy" decoding="async"></li>`)
+    .join('');
+  return `<section class="medal-gallery" aria-label="${escapeHtml(title)}">
+<h2>${escapeHtml(title)}</h2>
+<ul>${items}</ul>
+</section>`;
+}
+
+/** Hors mode perdu : un moyen de joindre la famille reste présent, sans s'imposer. */
+function discreetContact(medal: PublicMedal): string {
+  const action = medal.owner
+    ? `<a class="medal-secondary" href="${escapeHtml(telHref(medal.owner.phone))}">${PHONE_ICON}<span>${
+        medal.owner.name ? `Appeler ${escapeHtml(medal.owner.name)}` : 'Appeler ma famille'
+      }</span></a>`
+    : `<p class="medal-muted">${medal.vet ? 'Tu peux me déposer chez mon vétérinaire, indiqué ci-dessus.' : 'Tu peux me déposer chez un vétérinaire : ma puce permettra de retrouver ma famille.'}</p>`;
+  return `<section class="medal-discreet">
+<p><strong>Je me promène tout seul ?</strong> Merci de veiller sur moi.</p>
+${action}
+</section>`;
+}
+
+export function renderMedalPage(medal: PublicMedal, photoUrl: string | null, reportAction: string | null = null, galleryBase: string | null = null): string {
   const facts = [medal.breed, medal.sex, medal.age].filter(Boolean).map((f) => escapeHtml(f!));
   const parts: string[] = [];
   const lost = Boolean(medal.lost);
@@ -96,8 +121,14 @@ ${medal.area ? `<p class="medal-area">J’habite à ${escapeHtml(medal.area)}</p
   if (medal.lost?.message) parts.push(`<p class="medal-message medal-message-lost">${multiline(medal.lost.message)}</p>`);
   if (medal.message) parts.push(`<p class="medal-message">${multiline(medal.message)}</p>`);
 
-  parts.push(callCard(medal, lost));
-  if (lost && reportAction) parts.push(reportForm(medal.name, reportAction));
+  if (lost) {
+    // Mode perdu : appeler et signaler d'abord, les photos aident ensuite à le reconnaître.
+    parts.push(callCard(medal, true));
+    if (reportAction) parts.push(reportForm(medal.name, reportAction));
+    parts.push(gallery(medal, galleryBase, 'Pour me reconnaître'));
+  } else {
+    parts.push(gallery(medal, galleryBase, 'Mes souvenirs'));
+  }
 
   if (medal.emergencyInfo) {
     parts.push(`<section class="medal-card medal-urgent">
@@ -116,7 +147,9 @@ ${vet.phone ? `<a class="medal-secondary" href="${escapeHtml(telHref(vet.phone))
 </section>`);
   }
 
-  return layout(lost ? `${medal.name} est perdu · EKO` : `${medal.name} · EKO`, parts.join('\n'), lost && Boolean(reportAction));
+  if (!lost) parts.push(discreetContact(medal));
+
+  return layout(lost ? `${medal.name} est perdu · EKO` : `${medal.name} · EKO`, parts.filter(Boolean).join('\n'), lost && Boolean(reportAction));
 }
 
 /** Après un signalement : remerciement, et rappel du numéro à appeler. */

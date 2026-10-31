@@ -1,10 +1,12 @@
-import { type MedalSettings, type MedalStatus, type PublicMedal } from '@eko/shared';
+import { MEDAL_GALLERY_MAX, type MedalSettings, type MedalStatus, type PublicMedal } from '@eko/shared';
+import { Link } from '@tanstack/react-router';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { encode } from 'uqr';
 import { Icon } from '../../components/Icon';
 import { Page, QueryError, Section } from '../../components/ui';
 import { errorMessage } from '../../lib/api';
 import { formatDate } from '../../lib/dates';
+import { useAlbums } from '../memories/queries';
 import { useDog } from '../profile/queries';
 import { LostSection } from './LostSection';
 import { useDeactivateMedal, useMedal, useNewMedalLink, usePublicPreview, useSaveMedalSettings } from './queries';
@@ -175,6 +177,7 @@ const TOGGLES: { key: 'showPhoto' | 'showAge' | 'showArea' | 'showVet'; label: s
 
 function SettingsSection({ status }: { status: MedalStatus }) {
   const save = useSaveMedalSettings();
+  const albums = useAlbums();
   const [form, setForm] = useState<Form>(() => toForm(status.settings));
   const [saved, setSaved] = useState(false);
 
@@ -260,6 +263,30 @@ function SettingsSection({ status }: { status: MedalStatus }) {
             value={form.message}
             onChange={text('message')}
           />
+        </div>
+
+        <div className="field">
+          <label htmlFor="medal-album">Photos affichées sur la fiche</label>
+          <select
+            id="medal-album"
+            className="input"
+            value={form.albumId ?? ''}
+            onChange={(e) => {
+              setSaved(false);
+              setForm((f) => ({ ...f, albumId: e.target.value || null }));
+            }}
+          >
+            <option value="">Aucune</option>
+            {albums.data?.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} ({a.count})
+              </option>
+            ))}
+          </select>
+          <p className="hint">
+            Les {MEDAL_GALLERY_MAX} plus récentes de l’album, en aperçu (jamais les originaux). Crée un album dédié dans{' '}
+            <Link to="/souvenirs/albums">Souvenirs › Albums</Link> pour choisir exactement ce qui est visible.
+          </p>
         </div>
 
         {save.isError && (

@@ -28,6 +28,8 @@ export const medalSettingsSchema = z.object({
   emergencyInfo: optionalText(500),
   /** Message libre pour la personne qui trouve le chien. */
   message: optionalText(300),
+  /** Album dont les photos s'affichent sur la fiche (aperçus seulement), ou null. */
+  albumId: z.string().max(64).nullable().optional().transform((value) => value || null),
 });
 export type MedalSettingsInput = z.input<typeof medalSettingsSchema>;
 export type MedalSettings = z.output<typeof medalSettingsSchema>;
@@ -42,7 +44,11 @@ export const DEFAULT_MEDAL_SETTINGS: MedalSettings = {
   ownerName: null,
   emergencyInfo: null,
   message: null,
+  albumId: null,
 };
+
+/** Nombre maximal de photos de l'album affichées sur la fiche publique. */
+export const MEDAL_GALLERY_MAX = 12;
 
 export interface MedalStatus {
   /** Adresse publique encodée dans le QR et la puce NFC ; null tant qu'aucune médaille n'est active. */
@@ -67,6 +73,8 @@ export interface PublicMedal {
   vet: { name: string; organization: string | null; phone: string | null; address: string | null } | null;
   /** Mode perdu : bandeau d'alerte et formulaire de signalement sur la fiche. */
   lost: { message: string | null } | null;
+  /** Souvenirs de l'album choisi (identifiants), affichés en aperçu. */
+  gallery: string[];
 }
 
 /** Numéro au format tel: (chiffres et + uniquement). */
@@ -84,6 +92,7 @@ export function buildPublicMedal(
   vet: Pick<Contact, 'name' | 'organization' | 'phone' | 'address'> | null,
   lost: { message: string | null } | null = null,
   today = new Date(),
+  gallery: string[] = [],
 ): PublicMedal {
   return {
     name: dog.name,
@@ -100,5 +109,6 @@ export function buildPublicMedal(
         ? { name: vet.name, organization: vet.organization, phone: vet.phone, address: vet.address }
         : null,
     lost,
+    gallery: gallery.slice(0, MEDAL_GALLERY_MAX),
   };
 }

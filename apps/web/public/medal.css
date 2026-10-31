@@ -240,3 +240,43 @@ body {
   color: var(--accent);
   font-weight: 600;
 }
+/* Photos de l'album choisi (hors mode perdu, ou pour le reconnaître). */
+.medal-gallery h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+.medal-gallery ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.medal-gallery img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--border);
+}
+/* Contact discret, hors mode perdu. */
+.medal-discreet {
+  padding: 16px 4px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.medal-discreet p {
+  margin: 0 0 12px;
+}
+.medal-discreet strong {
+  color: var(--text);
+}
+.medal-discreet .medal-secondary {
+  min-height: 48px;
+  border-width: 1px;
+  font-weight: 600;
+}
