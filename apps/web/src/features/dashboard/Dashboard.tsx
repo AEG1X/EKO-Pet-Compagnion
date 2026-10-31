@@ -2,6 +2,8 @@ import type { DashboardSection } from '@eko/shared';
 import { Link } from '@tanstack/react-router';
 import { useOwner } from '../../app/AppGate';
 import { Icon, type IconName, Paw } from '../../components/Icon';
+import { dogSubtitle } from '../profile/ProfilePage';
+import { useDog } from '../profile/queries';
 
 const SECTIONS: Record<DashboardSection, { label: string; icon: IconName; to: string; empty: string }> = {
   sante: { label: 'Santé', icon: 'heart', to: '/sante', empty: 'Aucun soin enregistré' },
@@ -12,9 +14,6 @@ const SECTIONS: Record<DashboardSection, { label: string; icon: IconName; to: st
   documents: { label: 'Documents', icon: 'file', to: '/documents', empty: 'Aucun document' },
 };
 
-// Section fonctionnelle en phase A2 : route générée dynamiquement (voir app/router.tsx).
-const PROFILE_PATH: string = '/profil';
-
 function greeting(): string {
   const hour = new Date().getHours();
   if (hour < 5 || hour >= 18) return 'Bonsoir';
@@ -23,6 +22,7 @@ function greeting(): string {
 
 export function Dashboard() {
   const me = useOwner();
+  const dog = useDog();
   const today = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
   return (
@@ -39,7 +39,7 @@ export function Dashboard() {
         </Link>
       </header>
 
-      <section className="hero" aria-label="Eko">
+      <section className="hero" aria-label={dog.data?.name ?? 'Profil'}>
         <span className="hero-paw">
           <Paw size={180} />
         </span>
@@ -47,12 +47,19 @@ export function Dashboard() {
           Photo de couverture à venir
         </p>
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div>
-            <p className="hero-name">Eko</p>
-            <p>Eurasier</p>
-          </div>
-          <Link to={PROFILE_PATH} className="btn btn-secondary" style={{ color: 'var(--text)' }}>
-            Voir le profil
+          {dog.data ? (
+            <div>
+              <p className="hero-name">{dog.data.name}</p>
+              <p>{dogSubtitle(dog.data)}</p>
+            </div>
+          ) : (
+            <div>
+              <p className="hero-name">{dog.isPending ? '\u00a0' : 'Bienvenue'}</p>
+              <p>{dog.isPending ? '\u00a0' : 'Commence par créer le profil de ton chien.'}</p>
+            </div>
+          )}
+          <Link to="/profil" className="btn btn-secondary" style={{ color: 'var(--text)' }}>
+            {dog.isSuccess && !dog.data ? 'Créer le profil' : 'Voir le profil'}
           </Link>
         </div>
       </section>

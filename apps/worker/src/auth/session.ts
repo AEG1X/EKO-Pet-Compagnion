@@ -80,6 +80,8 @@ export async function revokeAllSessions(c: Context<AppEnv>, ownerId: string, exc
  * est défini et que le propriétaire n'a rien fait depuis IDLE_LOCK_MINUTES.
  */
 export const loadSession: MiddlewareHandler<AppEnv> = async (c, next) => {
+  // Chaque module de routes déclare ses propres gardes : si la session est déjà chargée, on ne relit pas la base.
+  if (c.get('session')) return next();
   const token = getCookie(c, COOKIE_NAME, 'host');
   if (!token) throw apiError(401, 'unauthenticated', 'Connexion requise.');
 

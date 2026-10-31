@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter } from '@tanstack/react-rout
 import { Dashboard } from '../features/dashboard/Dashboard';
 import { MorePage } from '../features/placeholder/MorePage';
 import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
+import { ProfilePage } from '../features/profile/ProfilePage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { NAV } from './navigation';
 import { Shell } from './Shell';
@@ -10,6 +11,7 @@ const rootRoute = createRootRoute({ component: Shell });
 
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: Dashboard });
 const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reglages', component: SettingsPage });
+const profileRoute = createRoute({ getParentRoute: () => rootRoute, path: '/profil', component: ProfilePage });
 const moreRoute = createRoute({ getParentRoute: () => rootRoute, path: '/plus', component: MorePage });
 const addRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -36,7 +38,7 @@ const sectionRoutes = NAV.filter((entry) => entry.phase).map((entry) =>
   }),
 );
 
-const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, moreRoute, addRoute, ...sectionRoutes]);
+const routeTree = rootRoute.addChildren([indexRoute, profileRoute, settingsRoute, moreRoute, addRoute, ...sectionRoutes]);
 
 export const router = createRouter({
   routeTree,
