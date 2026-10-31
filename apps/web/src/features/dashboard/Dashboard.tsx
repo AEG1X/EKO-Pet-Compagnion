@@ -6,7 +6,11 @@ import { dogSubtitle } from '../profile/ProfilePage';
 import { useDog } from '../profile/queries';
 import { useHealthEvents } from '../health/queries';
 import { upcomingDue } from '../health/upcoming';
-import { daysUntil, formatDate, relativeDays } from '../../lib/dates';
+import { expenses, feedingPlans, skills } from '../daily/queries';
+import { describeRation } from '../daily/FeedingPage';
+import { totalFor } from '../daily/ExpensesPage';
+import { formatEuros } from '@eko/shared';
+import { daysUntil, formatDate, relativeDays, todayIso } from '../../lib/dates';
 
 const SECTIONS: Record<DashboardSection, { label: string; icon: IconName; to: string; empty: string }> = {
   sante: { label: 'Santé', icon: 'heart', to: '/sante', empty: 'Aucun soin enregistré' },
@@ -29,13 +33,39 @@ export function Dashboard() {
   const events = useHealthEvents();
   const next = upcomingDue(events.data ?? [])[0];
   const lastCare = events.data?.[0];
-  const today = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+  const plans = feedingPlans.useList();
+  const skillList = skills.useList();
+  const expenseList = expenses.useList();
+  const today = todayIso();
+  const currentPlan = plans.data?.find((p) => p.startDate <= today && (!p.endDate || p.endDate >= today));
+  const acquired = skillList.data?.filter((s) => s.status === 'acquis').length ?? 0;
+  const learning = skillList.data?.filter((s) => s.status === 'en_cours').length ?? 0;
+  const monthSpent = totalFor(expenseList.data ?? [], today.slice(0, 7));
+
+  /** Résumé réel de chaque section, ou le texte d'attente tant qu'elle est vide. */
+  function summary(id: DashboardSection): string {
+    switch (id) {
+      case 'sante':
+        return lastCare ? `Dernier soin : ${lastCare.title}, ${formatDate(lastCare.date)}` : SECTIONS.sante.empty;
+      case 'alimentation':
+        return currentPlan ? [currentPlan.food, describeRation(currentPlan)].filter(Boolean).join(' · ') : SECTIONS.alimentation.empty;
+      case 'education':
+        return acquired + learning > 0
+          ? `${acquired} acquis${learning ? ` · ${learning} en cours` : ''}`
+          : SECTIONS.education.empty;
+      case 'depenses':
+        return expenseList.data?.length ? `${formatEuros(monthSpent)} ce mois-ci` : SECTIONS.depenses.empty;
+      default:
+        return SECTIONS[id].empty;
+    }
+  }
+  const todayLabel = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
   return (
     <div className="stack" style={{ gap: 20 }}>
       <header className="topbar">
         <div>
-          <p className="eyebrow">{today}</p>
+          <p className="eyebrow">{todayLabel}</p>
           <h1>
             {greeting()} {me.owner.displayName} !
           </h1>
@@ -107,7 +137,7 @@ export function Dashboard() {
                 </span>
                 <strong>{section.label}</strong>
                 <span className="hint">
-                  {id === 'sante' && lastCare ? `Dernier soin : ${lastCare.title}, ${formatDate(lastCare.date)}` : section.empty}
+                  {summary(id)}
                 </span>
               </Link>
             );

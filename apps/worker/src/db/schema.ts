@@ -223,3 +223,79 @@ export const weightEntry = sqliteTable(
   },
   (t) => [uniqueIndex('weight_dog_date_idx').on(t.dogId, t.date)],
 );
+
+export const feedingPlan = sqliteTable(
+  'feeding_plan',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    food: text('food').notNull(),
+    dailyGrams: integer('daily_grams'),
+    mealsPerDay: integer('meals_per_day'),
+    startDate: text('start_date').notNull(),
+    /** Null = alimentation actuelle. */
+    endDate: text('end_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('feeding_plan_dog_idx').on(t.dogId, t.startDate)],
+);
+
+export const trainingSkill = sqliteTable(
+  'training_skill',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    status: text('status', { enum: ['a_apprendre', 'en_cours', 'acquis'] }).notNull(),
+    acquiredDate: text('acquired_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('training_skill_dog_idx').on(t.dogId)],
+);
+
+export const trainingSession = sqliteTable(
+  'training_session',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(),
+    durationMinutes: integer('duration_minutes'),
+    skillId: text('skill_id').references(() => trainingSkill.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('training_session_dog_idx').on(t.dogId, t.date)],
+);
+
+export const expense = sqliteTable(
+  'expense',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(),
+    /** Montant en centimes d'euro. */
+    amountCents: integer('amount_cents').notNull(),
+    category: text('category', {
+      enum: ['sante', 'alimentation', 'toilettage', 'education', 'equipement', 'assurance', 'garde', 'autre'],
+    }).notNull(),
+    label: text('label').notNull(),
+    healthEventId: text('health_event_id').references(() => healthEvent.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('expense_dog_date_idx').on(t.dogId, t.date)],
+);
