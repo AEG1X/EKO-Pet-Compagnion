@@ -115,3 +115,55 @@ export const auditLog = sqliteTable(
   },
   (t) => [index('audit_at_idx').on(t.at)],
 );
+
+// ---------- Vie d'Eko (phase A2) ----------
+// Toutes les tables métier portent un dog_id : un seul chien aujourd'hui, un second sans migration lourde.
+
+export const dog = sqliteTable(
+  'dog',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    breed: text('breed'),
+    sex: text('sex', { enum: ['male', 'femelle'] }),
+    /** Date calendaire AAAA-MM-JJ. */
+    birthDate: text('birth_date'),
+    neutered: integer('neutered', { mode: 'boolean' }),
+    coat: text('coat'),
+    /** Données privées : jamais exposées publiquement. */
+    chipNumber: text('chip_number'),
+    passportNumber: text('passport_number'),
+    address: text('address'),
+    area: text('area'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('dog_owner_idx').on(t.ownerId)],
+);
+
+export const contact = sqliteTable(
+  'contact',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    kind: text('kind', {
+      enum: ['veterinaire', 'urgences', 'toiletteur', 'pension', 'educateur', 'eleveur', 'autre'],
+    }).notNull(),
+    name: text('name').notNull(),
+    organization: text('organization'),
+    phone: text('phone'),
+    email: text('email'),
+    address: text('address'),
+    notes: text('notes'),
+    primary: integer('is_primary', { mode: 'boolean' }).notNull().default(false),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('contact_dog_idx').on(t.dogId)],
+);

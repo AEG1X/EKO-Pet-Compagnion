@@ -12,7 +12,7 @@ export interface NavEntry {
 /** Entrées de la barre latérale (ordinateur), dans l'ordre de la maquette. */
 export const NAV: NavEntry[] = [
   { to: '/', label: 'Tableau de bord', icon: 'home' },
-  { to: '/profil', label: 'Profil d’Eko', icon: 'user', phase: 'A2', description: 'Identité, photo, race, vétérinaire et documents.' },
+  { to: '/profil', label: 'Profil d’Eko', icon: 'user' },
   { to: '/sante', label: 'Santé', icon: 'heart', phase: 'A2', description: 'Vaccins, antiparasitaires, consultations, traitements et poids.' },
   { to: '/calendrier', label: 'Calendrier', icon: 'calendar', phase: 'A2', description: 'Échéances, rappels, export .ics et abonnement Apple Calendrier.' },
   { to: '/alimentation', label: 'Alimentation', icon: 'bowl', phase: 'A2', description: 'Repas, rations et changements d’alimentation.' },

@@ -87,3 +87,23 @@ export async function addPasskey(client: TestClient, authenticator: VirtualAuthe
   const response = await authenticator.createCredential(options);
   return client.post('/api/passkeys/verify', { challengeId, response, label });
 }
+
+/**
+ * Vérifie qu'une route privée refuse l'accès sans session (401), en session de récupération (403)
+ * et quand le PIN verrouille la session (423). À appeler pour chaque nouvelle route privée.
+ */
+export async function expectPrivateRoute(method: string, path: string, body?: unknown) {
+  const anonymous = await new TestClient().request(method, path, body);
+  if (anonymous.status !== 401) throw new Error(`${method} ${path} sans session : ${anonymous.status} au lieu de 401`);
+
+  const { client, recoveryCodes } = await setupOwner();
+  const rescue = new TestClient();
+  await rescue.post('/api/auth/recovery', { code: recoveryCodes[0] });
+  const recovery = await rescue.request(method, path, body);
+  if (recovery.status !== 403) throw new Error(`${method} ${path} en récupération : ${recovery.status} au lieu de 403`);
+
+  await client.put('/api/pin', { pin: '482913' });
+  await client.post('/api/auth/lock');
+  const locked = await client.request(method, path, body);
+  if (locked.status !== 423) throw new Error(`${method} ${path} verrouillée : ${locked.status} au lieu de 423`);
+}
