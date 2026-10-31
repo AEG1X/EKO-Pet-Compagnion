@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { useOwner } from '../../app/AppGate';
 import { Icon, type IconName, Paw } from '../../components/Icon';
 import { dogSubtitle } from '../profile/ProfilePage';
+import { useMemories } from '../memories/queries';
 import { useDog } from '../profile/queries';
 import { DogAvatar } from '../profile/DogPhoto';
 import { documents } from '../documents/queries';
@@ -47,6 +48,7 @@ export function Dashboard() {
   const learning = skillList.data?.filter((s) => s.status === 'en_cours').length ?? 0;
   const monthSpent = totalFor(expenseList.data ?? [], today.slice(0, 7));
   const docList = documents.useList();
+  const memoryList = useMemories(dog.isSuccess && Boolean(dog.data));
 
   /** Résumé réel de chaque section, ou le texte d'attente tant qu'elle est vide. */
   function summary(id: DashboardSection): string {
@@ -66,8 +68,11 @@ export function Dashboard() {
         if (count === 0) return SECTIONS.documents.empty;
         return `${count} document${count > 1 ? 's' : ''} · dernier : ${docList.data![0]!.title}`;
       }
-      default:
-        return SECTIONS[id].empty;
+      case 'souvenirs': {
+        const count = memoryList.data?.length ?? 0;
+        if (count === 0) return SECTIONS.souvenirs.empty;
+        return `${count} souvenir${count > 1 ? 's' : ''} · dernier le ${formatDate(memoryList.data![0]!.takenDate)}`;
+      }
     }
   }
   const todayLabel = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
