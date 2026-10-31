@@ -188,3 +188,61 @@ describe('construction de la fiche', () => {
     expect(escapeHtml('<b>"Eko" & co\'</b>')).toBe('&lt;b&gt;&quot;Eko&quot; &amp; co&#39;&lt;/b&gt;');
   });
 });
+
+describe('photos de la fiche publique', () => {
+  const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...new Uint8Array(64)]);
+
+  async function memory(client: TestClient, n: number, withPreview = true) {
+    const up = await SELF.fetch(`${ORIGIN}/api/media`, {
+      method: 'PUT',
+      headers: { origin: ORIGIN, 'cf-connecting-ip': client.ip, cookie: client.cookie! },
+      body: new Uint8Array([...JPEG, n]),
+    });
+    const file = (await up.json()) as { id: string };
+    const preview = withPreview ? ((await (await client.upload(JPEG, 'image/jpeg')).json()) as { id: string }).id : null;
+    const res = await client.post('/api/memories', {
+      fileId: file.id,
+      previewFileId: preview,
+      contentHash: n.toString(16).padStart(64, '0'),
+      takenDate: `2026-10-0${n}`,
+      dateSource: 'exif',
+    });
+    return ((await res.json()) as { id: string }).id;
+  }
+
+  it('montre les aperçus de l’album choisi et un contact discret hors mode perdu', async () => {
+    const { client } = await ownerWithDog();
+    const { path } = await activate(client);
+    const inAlbum = await memory(client, 1);
+    const noPreview = await memory(client, 2, false);
+    const outside = await memory(client, 3);
+    const album = (await (await client.post('/api/albums', { name: 'Fiche' })).json()) as { id: string };
+    await client.put(`/api/albums/${album.id}/memories`, { add: [inAlbum, noPreview] });
+
+    let html = await (await visit(path)).text();
+    expect(html).not.toContain('Mes souvenirs');
+    expect(html).not.toContain('Tu m’as trouvé');
+    expect(html).toContain('Je me promène tout seul ?');
+    expect(html).toContain('déposer chez mon vétérinaire');
+
+    await client.put('/api/medal/settings', { ...SETTINGS, albumId: album.id });
+    html = await (await visit(path)).text();
+    expect(html).toContain('Mes souvenirs');
+    expect(html).toContain(`${path}/souvenir/${inAlbum}`);
+    expect(html).not.toContain(noPreview);
+    expect(html).toContain('Appeler Johan');
+    expect(html).not.toContain('Tu m’as trouvé');
+
+    const img = await visit(`${path}/souvenir/${inAlbum}`);
+    expect(img.status).toBe(200);
+    expect(img.headers.get('content-type')).toBe('image/jpeg');
+    expect((await visit(`${path}/souvenir/${outside}`)).status).toBe(404);
+
+    // En mode perdu : appel d'abord, les photos servent à le reconnaître.
+    await client.post('/api/lost', { message: null });
+    html = await (await visit(path)).text();
+    expect(html).toContain('Tu m’as trouvé ? Appelle vite !');
+    expect(html).toContain('Pour me reconnaître');
+    expect(html).not.toContain('Je me promène tout seul ?');
+  });
+});

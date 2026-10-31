@@ -1,5 +1,6 @@
 import {
   DEFAULT_MEDAL_SETTINGS,
+  MEDAL_GALLERY_MAX,
   MEDAL_ID_PATTERN,
   type MedalSettings,
   type MedalStatus,
@@ -9,7 +10,7 @@ import {
   medalSettingsSchema,
   medalUrl,
 } from '@eko/shared';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { type Context, Hono } from 'hono';
 import { loadSession, requireFullSession, requireUnlocked } from '../auth/session';
 import { type Db, getDb, schema } from '../db/client';
@@ -41,6 +42,8 @@ interface Snapshot {
   medal: PublicMedal;
   photoKey: string | null;
   photoType: string | null;
+  /** Aperçus de l'album affiché, par identifiant de souvenir (absent des anciens instantanés). */
+  gallery?: Record<string, { key: string; type: string }>;
 }
 const snapshotKey = (publicId: string) => `public/medal/${publicId}.json`;
 
@@ -69,11 +72,27 @@ export async function loadPublicMedal(db: Db, where: ReturnType<typeof eq>): Pro
     ? await db.select().from(schema.storedFile).where(eq(schema.storedFile.id, dog.photoFileId)).get()
     : undefined;
   const episode = await currentEpisode(db, dog.id);
+  // Album choisi : seulement ses aperçus (jamais les originaux), dans la limite de MEDAL_GALLERY_MAX.
+  const gallery: Record<string, { key: string; type: string }> = {};
+  if (settings.albumId) {
+    const previews = await db
+      .select({ id: schema.memory.id, key: schema.storedFile.r2Key, type: schema.storedFile.contentType })
+      .from(schema.albumMemory)
+      .innerJoin(schema.album, eq(schema.album.id, schema.albumMemory.albumId))
+      .innerJoin(schema.memory, eq(schema.memory.id, schema.albumMemory.memoryId))
+      .innerJoin(schema.storedFile, eq(schema.storedFile.id, schema.memory.previewFileId))
+      .where(and(eq(schema.album.id, settings.albumId), eq(schema.album.dogId, dog.id)))
+      .orderBy(desc(schema.memory.takenDate), desc(schema.memory.takenTime))
+      .limit(MEDAL_GALLERY_MAX);
+    for (const p of previews) gallery[p.id] = { key: p.key, type: p.type };
+  }
   const medal = buildPublicMedal(
     { ...dog, hasPhoto: Boolean(photo) },
     settings,
     vet ?? null,
     episode ? { message: episode.message } : null,
+    new Date(),
+    Object.keys(gallery),
   );
   return {
     row,
@@ -84,6 +103,7 @@ export async function loadPublicMedal(db: Db, where: ReturnType<typeof eq>): Pro
       medal,
       photoKey: medal.hasPhoto && photo ? photo.r2Key : null,
       photoType: medal.hasPhoto && photo ? photo.contentType : null,
+      gallery,
     },
   };
 }
@@ -235,7 +255,7 @@ export const publicMedalRoutes = new Hono<AppEnv>()
     const photoUrl = snapshot.photoKey ? `/m/${publicId}/photo` : null;
     // Sans D1, la fiche reste lisible mais le signalement en ligne n'est pas proposé : l'appel l'est toujours.
     const reportAction = loaded ? `/m/${publicId}/signaler` : null;
-    return htmlResponse(renderMedalPage(snapshot.medal, photoUrl, reportAction), 200);
+    return htmlResponse(renderMedalPage({ ...snapshot.medal, gallery: snapshot.medal.gallery ?? [] }, photoUrl, reportAction, `/m/${publicId}/souvenir/`), 200);
   })
 
   // Signalement d'une personne qui a vu le chien (formulaire HTML, fonctionne sans JavaScript).
@@ -279,6 +299,17 @@ export const publicMedalRoutes = new Hono<AppEnv>()
     }
     const outcome = await recordReport(c.env, db, loaded, parsed.data);
     return htmlResponse(renderReportResult(medal, back, outcome === 'ok' ? 'ok' : 'limited'), outcome === 'ok' ? 200 : 429);
+  })
+
+  // Aperçu d'un souvenir de l'album affiché sur la fiche.
+  .get('/m/:id/souvenir/:memoryId', async (c) => {
+    const found = await resolvePublic(c, c.req.param('id'));
+    const entry = found?.snapshot.gallery?.[c.req.param('memoryId')];
+    const object = entry ? await c.env.FILES.get(entry.key) : null;
+    if (!entry || !object) return new Response('Introuvable', { status: 404, headers: { 'cache-control': 'no-store' } });
+    return new Response(object.body, {
+      headers: { 'content-type': entry.type, 'cache-control': 'no-store', 'content-security-policy': FILE_CSP },
+    });
   })
 
   .get('/m/:id/photo', async (c) => {
