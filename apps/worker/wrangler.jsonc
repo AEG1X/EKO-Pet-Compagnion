@@ -29,6 +29,8 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Fichiers privés (documents, photo du profil). Jamais publics : tout passe par le Worker.
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "eko-files-dev" }],
   "env": {
     "staging": {
       "name": "eko-staging",
@@ -50,7 +52,8 @@
           "database_id": "fb9031de-c1a1-4440-8372-a0c5a738d6a9",
           "migrations_dir": "migrations"
         }
-      ]
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "eko-files-staging" }]
     },
     "production": {
       "name": "eko",
@@ -73,7 +76,8 @@
           "database_id": "17a3f8a1-7b80-4c3c-9a6a-8265e4c973b6",
           "migrations_dir": "migrations"
         }
-      ]
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "eko-files" }]
     }
   }
 }

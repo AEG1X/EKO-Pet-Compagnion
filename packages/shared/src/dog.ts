@@ -63,6 +63,8 @@ export interface Dog {
   address: string | null;
   area: string | null;
   notes: string | null;
+  /** Adresse de la photo du profil, servie par le Worker ; null sans photo. */
+  photoUrl: string | null;
   updatedAt: string;
 }
 

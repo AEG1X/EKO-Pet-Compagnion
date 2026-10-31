@@ -15,4 +15,7 @@ beforeEach(async () => {
     env.DB.prepare('PRAGMA defer_foreign_keys = on'),
     ...TABLES.map((t) => env.DB.prepare(`DELETE FROM ${t}`)),
   ]);
+  // Le stockage R2 de test n'est pas isolé entre les tests : on le vide aussi.
+  const { objects } = await env.FILES.list();
+  if (objects.length > 0) await env.FILES.delete(objects.map((o) => o.key));
 });

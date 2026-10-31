@@ -44,6 +44,21 @@ export class TestClient {
   delete(path: string) {
     return this.request('DELETE', path);
   }
+
+  /** Envoi brut d'un fichier, comme le fait le front (PUT /api/files). */
+  async upload(bytes: Uint8Array, contentType = 'application/octet-stream', name?: string) {
+    return SELF.fetch(`${ORIGIN}/api/files`, {
+      method: 'PUT',
+      headers: {
+        origin: ORIGIN,
+        'cf-connecting-ip': this.ip,
+        'content-type': contentType,
+        ...(name ? { 'x-file-name': encodeURIComponent(name) } : {}),
+        ...(this.cookie ? { cookie: this.cookie } : {}),
+      },
+      body: bytes,
+    });
+  }
 }
 
 export function newAuthenticator() {

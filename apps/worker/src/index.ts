@@ -6,6 +6,7 @@ import { accountRoutes } from './routes/account';
 import { authRoutes, purgeExpiredAuthData } from './routes/auth';
 import { dogRoutes } from './routes/dog';
 import { dailyRoutes } from './routes/daily';
+import { fileRoutes, purgePendingFiles } from './routes/files';
 import { healthRoutes } from './routes/health';
 import { csrfProtection } from './security/csrf';
 import { securityHeaders } from './security/headers';
@@ -26,7 +27,8 @@ const api = new Hono<AppEnv>()
   .route('/', accountRoutes)
   .route('/', dogRoutes)
   .route('/', healthRoutes)
-  .route('/', dailyRoutes);
+  .route('/', dailyRoutes)
+  .route('/', fileRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {
@@ -44,6 +46,7 @@ app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
 export default {
   fetch: app.fetch,
   async scheduled(_controller, env, ctx) {
-    ctx.waitUntil(purgeExpiredAuthData(getDb(env.DB)));
+    const db = getDb(env.DB);
+    ctx.waitUntil(Promise.all([purgeExpiredAuthData(db), purgePendingFiles(env, db)]));
   },
 } satisfies ExportedHandler<Env>;

@@ -18,7 +18,7 @@ export const NAV: NavEntry[] = [
   { to: '/alimentation', label: 'Alimentation', icon: 'bowl' },
   { to: '/education', label: 'Éducation', icon: 'cap' },
   { to: '/souvenirs', label: 'Souvenirs', icon: 'image', phase: 'B', description: 'Photos, vidéos, albums et timeline.' },
-  { to: '/documents', label: 'Documents', icon: 'file', phase: 'A2', description: 'Carnet de santé, ordonnances, assurance.' },
+  { to: '/documents', label: 'Documents', icon: 'file' },
   { to: '/depenses', label: 'Dépenses', icon: 'wallet' },
   { to: '/medaille', label: 'Médaille NFC / QR', icon: 'tag', phase: 'C', description: 'Fiche publique, mode perdu et signalements.' },
   { to: '/reglages', label: 'Réglages', icon: 'settings' },
