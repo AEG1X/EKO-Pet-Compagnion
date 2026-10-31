@@ -36,10 +36,14 @@ export const securityHeaders: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (!h.has('Content-Security-Policy')) h.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
   h.set('X-Content-Type-Options', 'nosniff');
   h.set('X-Frame-Options', 'DENY');
-  h.set('Referrer-Policy', 'no-referrer');
+  // Fiche publique : « same-origin » pour que le navigateur envoie l'origine du formulaire de signalement
+  // (avec « no-referrer », elle vaut « null ») ; rien ne part vers d'autres sites dans les deux cas.
+  h.set('Referrer-Policy', c.req.path.startsWith('/m/') ? 'same-origin' : 'no-referrer');
   h.set('Cross-Origin-Opener-Policy', 'same-origin');
   h.set('Cross-Origin-Resource-Policy', 'same-origin');
-  h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  // La géolocalisation n'est permise que sur la fiche publique (signalement, avec l'accord du visiteur).
+  const geolocation = c.req.path.startsWith('/m/') ? 'geolocation=(self)' : 'geolocation=()';
+  h.set('Permissions-Policy', `camera=(), microphone=(), ${geolocation}, payment=(), usb=()`);
   // Aucune page d'EKO ne doit être indexée, y compris la future fiche publique.
   h.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   if (c.env.ENVIRONMENT === 'staging' || c.env.ENVIRONMENT === 'production') {

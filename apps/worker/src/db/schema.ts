@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
  * Horodatages en millisecondes depuis l'époque Unix (UTC).
@@ -453,3 +453,42 @@ export const medal = sqliteTable('medal', {
   scanCount: integer('scan_count').notNull().default(0),
   updatedAt: integer('updated_at').notNull(),
 });
+
+/** Épisodes « perdu » : un seul en cours à la fois (ended_at null). */
+export const lostEpisode = sqliteTable(
+  'lost_episode',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    startedAt: integer('started_at').notNull(),
+    endedAt: integer('ended_at'),
+    message: text('message'),
+    /** Nombre de signalements reçus, conservé après la purge. */
+    reportCount: integer('report_count').notNull().default(0),
+    /** Signalements effacés (30 jours après la fin) : il ne reste que ce résumé. */
+    purgedAt: integer('purged_at'),
+    /** Dernière alerte « fiche consultée », pour ne pas en envoyer à chaque visite. */
+    lastScanAlertAt: integer('last_scan_alert_at'),
+  },
+  (t) => [index('lost_episode_dog_idx').on(t.dogId, t.startedAt)],
+);
+
+/** Signalement d'une personne qui a vu ou trouvé le chien. Données personnelles : purgées avec l'épisode. */
+export const finderReport = sqliteTable(
+  'finder_report',
+  {
+    id: text('id').primaryKey(),
+    episodeId: text('episode_id')
+      .notNull()
+      .references(() => lostEpisode.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at').notNull(),
+    message: text('message'),
+    contact: text('contact'),
+    latitude: real('latitude'),
+    longitude: real('longitude'),
+    accuracy: real('accuracy'),
+  },
+  (t) => [index('finder_report_episode_idx').on(t.episodeId, t.createdAt)],
+);

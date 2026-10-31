@@ -53,6 +53,14 @@ Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `S
 - Le numéro de téléphone est masqué par défaut, avec un avertissement à l'activation.
 - La page est rendue par le Worker, sans JavaScript, avec la même CSP stricte et `noindex`. Seuls le nombre de visites et la date de la dernière sont enregistrés, sans adresse IP.
 
+## Mode perdu et signalements
+
+- En mode perdu, la fiche affiche une alerte et un formulaire de signalement qui fonctionne sans JavaScript. La position n'est jointe que si le visiteur appuie sur « Joindre ma position » et l'accepte : la géolocalisation n'est autorisée (`Permissions-Policy`) que sur `/m/…`. L'appel reste toujours possible.
+- Protection contre les abus : vérification de l'origine, champ piège pour les robots, 5 signalements par heure et par visiteur (empreinte d'IP salée chaque jour, jamais l'IP), 200 signalements au plus par épisode.
+- Les visiteurs ne voient jamais les signalements ni les positions des autres.
+- Alertes au propriétaire : à chaque signalement, et pour un scan au plus une fois par quart d'heure, par Web Push et par Telegram s'il est relié, même si le push a fonctionné.
+- Conservation : signalements, positions et coordonnées des personnes sont effacés 30 jours après la fin du mode perdu (tâche planifiée de 3 h). Il ne reste qu'un résumé : dates et nombre de signalements.
+
 ## Signaler un problème
 
 Toute faille supposée se traite en priorité, avant toute nouvelle fonctionnalité.
