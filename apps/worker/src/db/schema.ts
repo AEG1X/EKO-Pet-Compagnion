@@ -26,12 +26,22 @@ export const storedFile = sqliteTable(
       .references(() => owner.id, { onDelete: 'cascade' }),
     r2Key: text('r2_key').notNull(),
     contentType: text('content_type', {
-      enum: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      enum: [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/heic',
+        'image/gif',
+        'video/mp4',
+        'video/quicktime',
+        'video/webm',
+      ],
     }).notNull(),
     size: integer('size').notNull(),
     /** Nom d'origine, affiché au téléchargement. */
     name: text('name'),
-    purpose: text('purpose', { enum: ['pending', 'document', 'photo'] }).notNull(),
+    purpose: text('purpose', { enum: ['pending', 'document', 'photo', 'memory', 'preview'] }).notNull(),
     createdAt: integer('created_at').notNull(),
   },
   (t) => [index('stored_file_owner_idx').on(t.ownerId, t.purpose)],
@@ -491,4 +501,40 @@ export const finderReport = sqliteTable(
     accuracy: real('accuracy'),
   },
   (t) => [index('finder_report_episode_idx').on(t.episodeId, t.createdAt)],
+);
+
+// ---------- Souvenirs (phase B) ----------
+
+/** Photo ou vidéo : l'original n'est jamais modifié ; l'aperçu est un fichier à part. */
+export const memory = sqliteTable(
+  'memory',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    fileId: text('file_id')
+      .notNull()
+      .unique()
+      .references(() => storedFile.id),
+    previewFileId: text('preview_file_id').references(() => storedFile.id, { onDelete: 'set null' }),
+    /** SHA-256 de l'original : un même fichier n'est importé qu'une fois. */
+    contentHash: text('content_hash').notNull(),
+    kind: text('kind', { enum: ['photo', 'video'] }).notNull(),
+    /** Date AAAA-MM-JJ du souvenir (classement année / mois) et heure facultative. */
+    takenDate: text('taken_date').notNull(),
+    takenTime: text('taken_time'),
+    dateSource: text('date_source', { enum: ['exif', 'video', 'file', 'manual'] }).notNull(),
+    caption: text('caption'),
+    favorite: integer('favorite', { mode: 'boolean' }).notNull().default(false),
+    width: integer('width'),
+    height: integer('height'),
+    durationSeconds: integer('duration_seconds'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [
+    index('memory_dog_date_idx').on(t.dogId, t.takenDate),
+    uniqueIndex('memory_dog_hash_idx').on(t.dogId, t.contentHash),
+  ],
 );

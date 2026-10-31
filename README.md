@@ -39,5 +39,5 @@ docs/           Installation, déploiement, sécurité, journal des décisions
 | A1 | Socle : passkeys, PIN, sessions, sécurité, design system, navigation, PWA, CI | Terminée (30/10/2026) |
 | A2 | Profil, santé, quotidien, documents, rappels, calendrier, sauvegardes D1 | Prête à valider (étapes 1 à 6 livrées en PR #4 à #10) |
 | C | Médaille NFC/QR, fiche publique, mode perdu | Prête à valider : fiche publique et QR (PR #13), mode perdu (PR #14) |
-| B | Souvenirs : photos, vidéos, albums, partage | À venir |
+| B | Souvenirs : photos, vidéos, albums, partage | En cours : étape 1 (import et timeline) livrée |
 | D | Enrichissements | À venir |

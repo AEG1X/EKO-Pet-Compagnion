@@ -17,7 +17,7 @@ export const NAV: NavEntry[] = [
   { to: '/calendrier', label: 'Calendrier', icon: 'calendar' },
   { to: '/alimentation', label: 'Alimentation', icon: 'bowl' },
   { to: '/education', label: 'Éducation', icon: 'cap' },
-  { to: '/souvenirs', label: 'Souvenirs', icon: 'image', phase: 'B', description: 'Photos, vidéos, albums et timeline.' },
+  { to: '/souvenirs', label: 'Souvenirs', icon: 'image' },
   { to: '/documents', label: 'Documents', icon: 'file' },
   { to: '/depenses', label: 'Dépenses', icon: 'wallet' },
   { to: '/medaille', label: 'Médaille NFC / QR', icon: 'tag' },

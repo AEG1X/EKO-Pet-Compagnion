@@ -61,6 +61,14 @@ Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `S
 - Alertes au propriétaire : à chaque signalement, et pour un scan au plus une fois par quart d'heure, par Web Push et par Telegram s'il est relié, même si le push a fonctionné.
 - Conservation : signalements, positions et coordonnées des personnes sont effacés 30 jours après la fin du mode perdu (tâche planifiée de 3 h). Il ne reste qu'un résumé : dates et nombre de signalements.
 
+## Souvenirs
+
+- Les photos et vidéos passent par le Worker (`PUT /api/media`, 95 Mo maximum), qui les transmet à R2 au fil de l'eau, sans les garder en mémoire.
+- Le format réel est vérifié sur les premiers octets. La longueur annoncée est imposée : un envoi tronqué échoue.
+- Les originaux ne sont jamais recompressés. Seul un aperçu JPEG de 640 px est créé par le navigateur.
+- La suppression d'un souvenir efface l'original après une confirmation explicite.
+- Une empreinte SHA-256 de chaque original évite les doublons.
+
 ## Signaler un problème
 
 Toute faille supposée se traite en priorité, avant toute nouvelle fonctionnalité.

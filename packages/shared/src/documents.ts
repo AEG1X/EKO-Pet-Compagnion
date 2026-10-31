@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isoDateSchema } from './dog';
 import { optionalId, optionalText } from './fields';
+import type { MediaType } from './memories';
 
 // ---------------------------------------------------------------- Fichiers (R2)
 
@@ -46,7 +47,7 @@ export function sniffFileType(bytes: Uint8Array): FileType | null {
 export interface StoredFile {
   id: string;
   name: string | null;
-  contentType: FileType;
+  contentType: FileType | MediaType;
   size: number;
 }
 

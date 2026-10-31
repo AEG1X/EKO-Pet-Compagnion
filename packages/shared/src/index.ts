@@ -9,3 +9,4 @@ export * from './reminders';
 export * from './notifications';
 export * from './medal';
 export * from './lost';
+export * from './memories';

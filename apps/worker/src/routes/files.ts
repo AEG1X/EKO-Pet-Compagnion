@@ -1,5 +1,6 @@
 import {
   type EkoDocument,
+  FILE_TYPES,
   FILE_TYPES_LABEL,
   IMAGE_TYPES,
   STORAGE,
@@ -11,7 +12,7 @@ import {
   formatBytes,
   sniffFileType,
 } from '@eko/shared';
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { loadSession, requireFullSession, requireUnlocked } from '../auth/session';
 import { type Db, schema } from '../db/client';
@@ -25,9 +26,9 @@ import { findDog, requireDog, toDog } from './dog';
 type FileRow = typeof schema.storedFile.$inferSelect;
 
 /** Politique de sécurité propre aux fichiers servis : aucun script, aucun cadre. */
-export const FILE_CSP = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; object-src 'self'; frame-ancestors 'none'";
+export const FILE_CSP = "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; object-src 'self'; frame-ancestors 'none'";
 
-function toFile(row: FileRow): StoredFile {
+export function toFile(row: FileRow): StoredFile {
   return { id: row.id, name: row.name, contentType: row.contentType, size: row.size };
 }
 
@@ -42,7 +43,7 @@ export async function usedBytes(db: Db, ownerId: string): Promise<number> {
 }
 
 /** Nom d'origine envoyé par le navigateur (encodé en URI), nettoyé et raccourci. */
-function cleanFileName(header: string | undefined): string | null {
+export function cleanFileName(header: string | undefined): string | null {
   if (!header) return null;
   let name: string;
   try {
@@ -59,14 +60,14 @@ function cleanFileName(header: string | undefined): string | null {
 }
 
 /** En-tête Content-Disposition avec un nom compatible ASCII et sa version UTF-8. */
-function disposition(kind: 'inline' | 'attachment', name: string | null): string {
+export function disposition(kind: 'inline' | 'attachment', name: string | null): string {
   if (!name) return kind;
   const ascii = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
   return `${kind}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
 
 /** Fichier du propriétaire, ou 404 : un fichier d'un autre compte est traité comme inexistant. */
-async function ownFile(db: Db, ownerId: string, id: string): Promise<FileRow> {
+export async function ownFile(db: Db, ownerId: string, id: string): Promise<FileRow> {
   const row = await db
     .select()
     .from(schema.storedFile)
@@ -77,13 +78,19 @@ async function ownFile(db: Db, ownerId: string, id: string): Promise<FileRow> {
 }
 
 /** Supprime un fichier de R2 puis de la base. */
-async function deleteFile(env: Env, db: Db, row: FileRow) {
+export async function deleteFile(env: Env, db: Db, row: FileRow) {
   await env.FILES.delete(row.r2Key);
   await db.delete(schema.storedFile).where(eq(schema.storedFile.id, row.id));
 }
 
 /** Rattache un fichier envoyé (« pending ») à son usage ; refuse un fichier déjà utilisé ou d'un autre compte. */
-async function claimFile(db: Db, ownerId: string, fileId: string, purpose: 'document' | 'photo'): Promise<FileRow> {
+export async function claimFile(
+  db: Db,
+  ownerId: string,
+  fileId: string,
+  purpose: 'document' | 'photo' | 'memory' | 'preview',
+  allowedTypes: readonly string[],
+): Promise<FileRow> {
   const claimed = await db
     .update(schema.storedFile)
     .set({ purpose })
@@ -92,6 +99,7 @@ async function claimFile(db: Db, ownerId: string, fileId: string, purpose: 'docu
         eq(schema.storedFile.id, fileId),
         eq(schema.storedFile.ownerId, ownerId),
         eq(schema.storedFile.purpose, 'pending'),
+        inArray(schema.storedFile.contentType, allowedTypes as FileRow['contentType'][]),
       ),
     )
     .returning();
@@ -184,18 +192,27 @@ export const fileRoutes = new Hono<AppEnv>()
   // Lecture d'un fichier : uniquement par son propriétaire, jamais mis en cache partagé.
   .get('/files/:id', async (c) => {
     const row = await ownFile(c.get('db'), c.get('session').ownerId, c.req.param('id'));
-    const object = await c.env.FILES.get(row.r2Key);
+    // Lecture partielle (Range) : indispensable pour lire une vidéo dans Safari.
+    const wantsRange = /^bytes=\d*-\d*$/.test(c.req.header('range') ?? '');
+    const object = await c.env.FILES.get(row.r2Key, wantsRange ? { range: c.req.raw.headers } : undefined);
     if (!object) throw apiError(404, 'not_found', 'Fichier introuvable.');
     const kind = c.req.query('download') === '1' ? 'attachment' : 'inline';
-    return new Response(object.body, {
-      headers: {
-        'content-type': row.contentType,
-        'content-length': String(row.size),
-        'content-disposition': disposition(kind, row.name),
-        'cache-control': 'private, no-store',
-        'content-security-policy': FILE_CSP,
-      },
-    });
+    const headers: Record<string, string> = {
+      'content-type': row.contentType,
+      'content-length': String(row.size),
+      'accept-ranges': 'bytes',
+      'content-disposition': disposition(kind, row.name),
+      'cache-control': 'private, no-store',
+      'content-security-policy': FILE_CSP,
+    };
+    const range = object.range as { offset?: number; length?: number } | undefined;
+    if (wantsRange && range && range.offset !== undefined) {
+      const length = range.length ?? row.size - range.offset;
+      headers['content-length'] = String(length);
+      headers['content-range'] = `bytes ${range.offset}-${range.offset + length - 1}/${row.size}`;
+      return new Response(object.body, { status: 206, headers });
+    }
+    return new Response(object.body, { headers });
   })
 
   // Abandon d'un envoi qui ne sera pas rattaché (formulaire annulé).
@@ -217,10 +234,10 @@ export const fileRoutes = new Hono<AppEnv>()
     const ownerId = c.get('session').ownerId;
     if (fileId) {
       const pending = await ownFile(db, ownerId, fileId);
-      if (!IMAGE_TYPES.includes(pending.contentType)) {
+      if (!(IMAGE_TYPES as readonly string[]).includes(pending.contentType)) {
         throw apiError(415, 'unsupported_file', 'La photo doit être une image JPEG, PNG ou WebP.');
       }
-      await claimFile(db, ownerId, fileId, 'photo');
+      await claimFile(db, ownerId, fileId, 'photo', IMAGE_TYPES);
     }
     await db.update(schema.dog).set({ photoFileId: fileId, updatedAt: Date.now() }).where(eq(schema.dog.id, dog.id));
     // L'ancienne photo ne sert plus : on libère sa place.
@@ -242,7 +259,7 @@ export const fileRoutes = new Hono<AppEnv>()
     const dog = await requireDog(c);
     const db = c.get('db');
     await checkSameDog(db, schema.healthEvent, dog.id, input.healthEventId, 'Soin introuvable.');
-    await claimFile(db, c.get('session').ownerId, fileId, 'document');
+    await claimFile(db, c.get('session').ownerId, fileId, 'document', FILE_TYPES);
     const id = randomId();
     const now = Date.now();
     await db.insert(schema.document).values({ id, dogId: dog.id, fileId, ...input, createdAt: now, updatedAt: now });

@@ -13,6 +13,7 @@ import { calendarFeedRoutes, reminderRoutes } from './routes/reminders';
 import { healthRoutes } from './routes/health';
 import { lostRoutes, purgeOldReports } from './routes/lost';
 import { medalRoutes, publicMedalRoutes } from './routes/medal';
+import { memoryRoutes } from './routes/memories';
 import { csrfProtection } from './security/csrf';
 import { securityHeaders } from './security/headers';
 
@@ -40,7 +41,8 @@ const api = new Hono<AppEnv>()
   .route('/', reminderRoutes)
   .route('/', notificationRoutes)
   .route('/', medalRoutes)
-  .route('/', lostRoutes);
+  .route('/', lostRoutes)
+  .route('/', memoryRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {
