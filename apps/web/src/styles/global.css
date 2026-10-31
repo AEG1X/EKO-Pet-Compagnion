@@ -1139,6 +1139,8 @@ details > summary {
   display: grid;
   gap: 6px;
   font-size: 0.92rem;
+}
+
 /* ---------- Ajout rapide ---------- */
 .quick-choice {
   width: 100%;
