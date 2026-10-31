@@ -4,7 +4,13 @@ import { getDb } from './db/client';
 import type { AppEnv, Env } from './env';
 import { accountRoutes } from './routes/account';
 import { authRoutes, purgeExpiredAuthData } from './routes/auth';
+import { backupRoutes } from './routes/backup';
 import { dogRoutes } from './routes/dog';
+import { dailyRoutes } from './routes/daily';
+import { fileRoutes, purgePendingFiles } from './routes/files';
+import { notificationRoutes, sendDailyDigests } from './routes/notifications';
+import { calendarFeedRoutes, reminderRoutes } from './routes/reminders';
+import { healthRoutes } from './routes/health';
 import { csrfProtection } from './security/csrf';
 import { securityHeaders } from './security/headers';
 
@@ -21,8 +27,16 @@ const api = new Hono<AppEnv>()
   .use('*', csrfProtection)
   .get('/health', (c) => c.json({ ok: true }))
   .route('/auth', authRoutes)
+  // Public (jeton dans l'adresse) : monté avant les routes privées, dont le contrôle de session s'applique à tout ce qui suit.
+  .route('/', calendarFeedRoutes)
+  .route('/', backupRoutes)
   .route('/', accountRoutes)
-  .route('/', dogRoutes);
+  .route('/', dogRoutes)
+  .route('/', healthRoutes)
+  .route('/', dailyRoutes)
+  .route('/', fileRoutes)
+  .route('/', reminderRoutes)
+  .route('/', notificationRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {
@@ -40,6 +54,8 @@ app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
 export default {
   fetch: app.fetch,
   async scheduled(_controller, env, ctx) {
-    ctx.waitUntil(purgeExpiredAuthData(getDb(env.DB)));
+    const db = getDb(env.DB);
+    // 3 h UTC : ménage ; 6 h et 7 h UTC : récapitulatif de 8 h, heure de Paris (été comme hiver).
+    ctx.waitUntil(Promise.all([purgeExpiredAuthData(db), purgePendingFiles(env, db), sendDailyDigests(env, db)]));
   },
 } satisfies ExportedHandler<Env>;

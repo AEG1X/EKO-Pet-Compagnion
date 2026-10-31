@@ -29,6 +29,7 @@ docs/           Installation, déploiement, sécurité, journal des décisions
 - [Installation locale](docs/installation.md)
 - [Déploiement sur Cloudflare](docs/deploiement.md)
 - [Sécurité et procédure d'urgence](docs/securite.md)
+- [Sauvegarde et restauration](docs/sauvegarde.md)
 - [Journal des décisions](docs/decisions/)
 
 ## Avancement
@@ -36,7 +37,7 @@ docs/           Installation, déploiement, sécurité, journal des décisions
 | Phase | Contenu | État |
 | --- | --- | --- |
 | A1 | Socle : passkeys, PIN, sessions, sécurité, design system, navigation, PWA, CI | Terminée (30/10/2026) |
-| A2 | Profil, santé, quotidien, documents, rappels, calendrier, sauvegardes D1 | En cours (étape 1 : profil et contacts) |
+| A2 | Profil, santé, quotidien, documents, rappels, calendrier, sauvegardes D1 | Prête à valider (étapes 1 à 6 livrées en PR #4 à #10) |
 | C | Médaille NFC/QR, fiche publique, mode perdu | À venir (avant B) |
 | B | Souvenirs : photos, vidéos, albums, partage | À venir |
 | D | Enrichissements | À venir |

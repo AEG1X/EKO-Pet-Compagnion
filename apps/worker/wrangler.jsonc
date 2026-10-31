@@ -14,7 +14,7 @@
     "run_worker_first": true
   },
   "observability": { "enabled": true },
-  "triggers": { "crons": ["0 3 * * *"] },
+  "triggers": { "crons": ["0 3,6,7 * * *"] },
   "vars": {
     "ENVIRONMENT": "development",
     "RP_ID": "localhost",
@@ -29,6 +29,8 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Fichiers privés (documents, photo du profil). Jamais publics : tout passe par le Worker.
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "eko-files-dev" }],
   "env": {
     "staging": {
       "name": "eko-staging",
@@ -36,7 +38,7 @@
       "workers_dev": false,
       "preview_urls": false,
       "routes": [{ "pattern": "staging.eko-companion.fr", "custom_domain": true }],
-      "triggers": { "crons": ["0 3 * * *"] },
+      "triggers": { "crons": ["0 3,6,7 * * *"] },
       "vars": {
         "ENVIRONMENT": "staging",
         "RP_ID": "staging.eko-companion.fr",
@@ -50,7 +52,8 @@
           "database_id": "fb9031de-c1a1-4440-8372-a0c5a738d6a9",
           "migrations_dir": "migrations"
         }
-      ]
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "eko-files-staging" }]
     },
     "production": {
       "name": "eko",
@@ -59,7 +62,7 @@
       "preview_urls": false,
       // Domaine encodé dans le QR de la médaille : ne plus le changer (voir docs/decisions/0003-domaine-personnel.md).
       "routes": [{ "pattern": "eko-companion.fr", "custom_domain": true }],
-      "triggers": { "crons": ["0 3 * * *"] },
+      "triggers": { "crons": ["0 3,6,7 * * *"] },
       "vars": {
         "ENVIRONMENT": "production",
         "RP_ID": "eko-companion.fr",
@@ -73,7 +76,8 @@
           "database_id": "17a3f8a1-7b80-4c3c-9a6a-8265e4c973b6",
           "migrations_dir": "migrations"
         }
-      ]
+      ],
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "eko-files" }]
     }
   }
 }

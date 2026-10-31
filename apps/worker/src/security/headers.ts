@@ -32,7 +32,8 @@ export const securityHeaders: MiddlewareHandler<AppEnv> = async (c, next) => {
     c.res = new Response(c.res.body, c.res);
   }
   const h = c.res.headers;
-  h.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+  // Un fichier servi (document, photo) porte déjà sa propre politique, plus stricte.
+  if (!h.has('Content-Security-Policy')) h.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
   h.set('X-Content-Type-Options', 'nosniff');
   h.set('X-Frame-Options', 'DENY');
   h.set('Referrer-Policy', 'no-referrer');

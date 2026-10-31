@@ -1,4 +1,4 @@
-import { type Contact, type Dog, contactInputSchema, dogInputSchema } from '@eko/shared';
+import { type Contact, type Dog, contactInputSchema, dogInputSchema, fileUrl } from '@eko/shared';
 import { and, asc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { Hono } from 'hono';
@@ -12,7 +12,7 @@ import { readJson } from '../lib/validate';
 type DogRow = typeof schema.dog.$inferSelect;
 type ContactRow = typeof schema.contact.$inferSelect;
 
-function toDog(row: DogRow): Dog {
+export function toDog(row: DogRow): Dog {
   return {
     id: row.id,
     name: row.name,
@@ -26,6 +26,7 @@ function toDog(row: DogRow): Dog {
     address: row.address,
     area: row.area,
     notes: row.notes,
+    photoUrl: row.photoFileId ? fileUrl(row.photoFileId) : null,
     updatedAt: new Date(row.updatedAt).toISOString(),
   };
 }

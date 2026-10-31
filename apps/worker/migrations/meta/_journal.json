@@ -15,6 +15,48 @@
       "when": 1793454200842,
       "tag": "0001_profil_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793454747562,
+      "tag": "0002_sante_poids",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793455154548,
+      "tag": "0003_quotidien",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793455688806,
+      "tag": "0004_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793456378027,
+      "tag": "0005_rappels",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793457131599,
+      "tag": "0006_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793457549168,
+      "tag": "0007_tableau_de_bord",
+      "breakpoints": true
     }
   ]
 }

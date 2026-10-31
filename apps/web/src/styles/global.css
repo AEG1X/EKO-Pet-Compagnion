@@ -710,3 +710,344 @@ select.input {
   flex-grow: 1;
   padding: 8px 0;
 }
+
+/* ---------- Graphiques ---------- */
+.chart {
+  position: relative;
+  max-width: 560px;
+}
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+.chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.chart-axis {
+  fill: var(--muted);
+  font-size: 14px;
+}
+.chart-value {
+  fill: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+}
+.chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.chart-area {
+  fill: var(--accent);
+  opacity: 0.1;
+}
+.chart-dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.chart-cross {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 14px));
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.tabs button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tabs button[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.due {
+  font-weight: 700;
+  color: var(--accent);
+}
+.due-late {
+  color: var(--danger);
+}
+.stat-cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat strong {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  align-items: center;
+}
+.bars li {
+  display: contents;
+}
+.bars-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.bars-track {
+  display: block;
+  height: 16px;
+}
+.bars-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+.bars-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+h3.eyebrow {
+  margin: 8px 0 0;
+}
+
+/* ---------- Photo du profil ---------- */
+.avatar {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--hero-text) 14%, transparent);
+  border: 2px solid color-mix(in srgb, var(--hero-text) 55%, transparent);
+  color: var(--hero-text);
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.hero {
+  gap: 16px;
+}
+.hero .btn-secondary {
+  color: var(--text);
+}
+.hero .btn-ghost {
+  color: var(--hero-text);
+  border-color: color-mix(in srgb, var(--hero-text) 45%, transparent);
+}
+
+/* ---------- Documents ---------- */
+.doc-link {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: inherit;
+  text-decoration: none;
+}
+.doc-link:hover strong {
+  text-decoration: underline;
+}
+.doc-link strong {
+  overflow-wrap: break-word;
+}
+/* Sur téléphone, les trois actions passent sous le document pour laisser la place au titre. */
+@media (max-width: 559px) {
+  .doc-item {
+    flex-wrap: wrap;
+  }
+  .doc-item .doc-link {
+    flex-basis: 100%;
+  }
+  .doc-item .contact-actions {
+    margin-left: auto;
+  }
+}
+.meter {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+.meter-warn .meter-fill {
+  background: var(--danger);
+}
+
+/* ---------- Calendrier ---------- */
+.btn-small {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+.flip {
+  display: inline-flex;
+  transform: rotate(180deg);
+}
+.done {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.agenda-item {
+  align-items: center;
+}
+/* Repère de type : plein (rappel), anneau (échéance de santé), gris (soin effectué). La forme suffit sans la couleur. */
+.dot,
+.agenda-mark {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+}
+.agenda-mark {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.dot-echeance,
+.agenda-echeance .agenda-mark {
+  background: transparent;
+}
+.dot-soin,
+.agenda-soin .agenda-mark {
+  border-color: var(--muted);
+  background: var(--muted);
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-width: 1.5px;
+}
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.month {
+  display: grid;
+  gap: 4px;
+}
+.month-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.month-weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.month-day {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.month-day:hover {
+  background: var(--tint);
+}
+.month-out {
+  color: var(--muted);
+  opacity: 0.55;
+}
+.month-today > span:first-child {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.month-selected {
+  border-color: var(--accent);
+  background: var(--tint);
+}
+.month-dots {
+  display: flex;
+  gap: 3px;
+  min-height: 7px;
+}
+details > summary {
+  cursor: pointer;
+}

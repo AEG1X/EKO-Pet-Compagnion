@@ -1,0 +1,1 @@
+ALTER TABLE `settings` ADD `hidden_sections` text DEFAULT '[]' NOT NULL;

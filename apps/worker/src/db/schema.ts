@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
  * Horodatages en millisecondes depuis l'époque Unix (UTC).
@@ -12,6 +12,30 @@ export const owner = sqliteTable('owner', {
   webauthnUserId: text('webauthn_user_id').notNull(),
   createdAt: integer('created_at').notNull(),
 });
+
+/**
+ * Fichier stocké dans R2 (clé = files/<propriétaire>/<id>). Les tailles servent aux plafonds
+ * applicatifs du stockage. « pending » : envoyé mais pas encore rattaché (purgé après 24 h).
+ */
+export const storedFile = sqliteTable(
+  'stored_file',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    r2Key: text('r2_key').notNull(),
+    contentType: text('content_type', {
+      enum: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+    }).notNull(),
+    size: integer('size').notNull(),
+    /** Nom d'origine, affiché au téléchargement. */
+    name: text('name'),
+    purpose: text('purpose', { enum: ['pending', 'document', 'photo'] }).notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [index('stored_file_owner_idx').on(t.ownerId, t.purpose)],
+);
 
 export const passkey = sqliteTable(
   'passkey',
@@ -85,6 +109,8 @@ export const settings = sqliteTable('settings', {
   theme: text('theme').notNull(),
   accent: text('accent').notNull(),
   sectionOrder: text('section_order').notNull(),
+  /** Liste JSON des sections masquées du tableau de bord. */
+  hiddenSections: text('hidden_sections').notNull().default('[]'),
   updatedAt: integer('updated_at').notNull(),
 });
 
@@ -139,6 +165,7 @@ export const dog = sqliteTable(
     address: text('address'),
     area: text('area'),
     notes: text('notes'),
+    photoFileId: text('photo_file_id').references(() => storedFile.id, { onDelete: 'set null' }),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at').notNull(),
   },
@@ -166,4 +193,242 @@ export const contact = sqliteTable(
     updatedAt: integer('updated_at').notNull(),
   },
   (t) => [index('contact_dog_idx').on(t.dogId)],
+);
+
+export const healthEvent = sqliteTable(
+  'health_event',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: ['vaccin', 'antiparasitaire', 'consultation', 'symptome', 'soin'] }).notNull(),
+    date: text('date').notNull(),
+    title: text('title').notNull(),
+    /** Vétérinaire ou autre contact ; conservé à null si le contact est supprimé. */
+    contactId: text('contact_id').references(() => contact.id, { onDelete: 'set null' }),
+    /** Prochaine échéance AAAA-MM-JJ : alimentera les rappels (étape 5). */
+    nextDueDate: text('next_due_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('health_event_dog_date_idx').on(t.dogId, t.date), index('health_event_due_idx').on(t.dogId, t.nextDueDate)],
+);
+
+export const treatment = sqliteTable(
+  'treatment',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    dosage: text('dosage'),
+    frequency: text('frequency'),
+    startDate: text('start_date').notNull(),
+    endDate: text('end_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('treatment_dog_idx').on(t.dogId, t.startDate)],
+);
+
+export const weightEntry = sqliteTable(
+  'weight_entry',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    /** Une pesée par jour : en saisir une seconde remplace la première. */
+    date: text('date').notNull(),
+    grams: integer('grams').notNull(),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('weight_dog_date_idx').on(t.dogId, t.date)],
+);
+
+export const feedingPlan = sqliteTable(
+  'feeding_plan',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    food: text('food').notNull(),
+    dailyGrams: integer('daily_grams'),
+    mealsPerDay: integer('meals_per_day'),
+    startDate: text('start_date').notNull(),
+    /** Null = alimentation actuelle. */
+    endDate: text('end_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('feeding_plan_dog_idx').on(t.dogId, t.startDate)],
+);
+
+export const trainingSkill = sqliteTable(
+  'training_skill',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    status: text('status', { enum: ['a_apprendre', 'en_cours', 'acquis'] }).notNull(),
+    acquiredDate: text('acquired_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('training_skill_dog_idx').on(t.dogId)],
+);
+
+export const trainingSession = sqliteTable(
+  'training_session',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(),
+    durationMinutes: integer('duration_minutes'),
+    skillId: text('skill_id').references(() => trainingSkill.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('training_session_dog_idx').on(t.dogId, t.date)],
+);
+
+export const expense = sqliteTable(
+  'expense',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(),
+    /** Montant en centimes d'euro. */
+    amountCents: integer('amount_cents').notNull(),
+    category: text('category', {
+      enum: ['sante', 'alimentation', 'toilettage', 'education', 'equipement', 'assurance', 'garde', 'autre'],
+    }).notNull(),
+    label: text('label').notNull(),
+    healthEventId: text('health_event_id').references(() => healthEvent.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('expense_dog_date_idx').on(t.dogId, t.date)],
+);
+
+export const document = sqliteTable(
+  'document',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    /** Le fichier est supprimé de R2 par la route qui supprime le document. */
+    fileId: text('file_id')
+      .notNull()
+      .references(() => storedFile.id),
+    category: text('category', {
+      enum: ['ordonnance', 'analyse', 'compte_rendu', 'facture', 'assurance', 'identification', 'certificat', 'autre'],
+    }).notNull(),
+    title: text('title').notNull(),
+    date: text('date').notNull(),
+    healthEventId: text('health_event_id').references(() => healthEvent.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('document_dog_date_idx').on(t.dogId, t.date), uniqueIndex('document_file_idx').on(t.fileId)],
+);
+
+export const reminder = sqliteTable(
+  'reminder',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    kind: text('kind', {
+      enum: ['rendez_vous', 'sante', 'toilettage', 'education', 'administratif', 'autre'],
+    }).notNull(),
+    /** Prochaine occurrence, AAAA-MM-JJ. Un rappel récurrent avance à l'occurrence suivante quand il est fait. */
+    date: text('date').notNull(),
+    /** Heure locale HH:MM (Europe/Paris), ou null pour toute la journée. */
+    time: text('time'),
+    recurrence: text('recurrence', { enum: ['none', 'daily', 'weekly', 'monthly', 'yearly'] }).notNull(),
+    notifyDaysBefore: integer('notify_days_before').notNull().default(1),
+    healthEventId: text('health_event_id').references(() => healthEvent.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    /** Rappel ponctuel fait : date à laquelle il a été coché. */
+    doneDate: text('done_date'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('reminder_dog_date_idx').on(t.dogId, t.date)],
+);
+
+/** Lien d'abonnement au calendrier (Apple Calendrier, Google Agenda) : un seul par propriétaire, révocable. */
+export const calendarFeed = sqliteTable('calendar_feed', {
+  ownerId: text('owner_id')
+    .primaryKey()
+    .references(() => owner.id, { onDelete: 'cascade' }),
+  /** SHA-256 du jeton : le jeton lui-même n'apparaît que dans l'adresse donnée une fois au propriétaire. */
+  tokenHash: text('token_hash').notNull().unique(),
+  createdAt: integer('created_at').notNull(),
+  lastUsedAt: integer('last_used_at'),
+});
+
+/** Appareils abonnés aux notifications Web Push. */
+export const pushSubscription = sqliteTable(
+  'push_subscription',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    label: text('label').notNull(),
+    createdAt: integer('created_at').notNull(),
+    lastSuccessAt: integer('last_success_at'),
+  },
+  (t) => [index('push_subscription_owner_idx').on(t.ownerId)],
+);
+
+/** Conversation Telegram liée (canal de secours), ou code de liaison en attente. */
+export const telegramLink = sqliteTable('telegram_link', {
+  ownerId: text('owner_id')
+    .primaryKey()
+    .references(() => owner.id, { onDelete: 'cascade' }),
+  chatId: text('chat_id'),
+  linkCode: text('link_code'),
+  linkCodeExpiresAt: integer('link_code_expires_at'),
+  linkedAt: integer('linked_at'),
+});
+
+/** Récapitulatifs quotidiens déjà envoyés : un seul par jour, même si la tâche planifiée se répète. */
+export const notificationRun = sqliteTable(
+  'notification_run',
+  {
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => owner.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(),
+    sentAt: integer('sent_at').notNull(),
+    /** Canaux effectivement utilisés, ex. « push:2 telegram ». */
+    summary: text('summary').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.ownerId, t.day] })],
 );

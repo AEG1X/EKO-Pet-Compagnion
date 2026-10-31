@@ -29,6 +29,22 @@ openssl rand -base64 24 | pnpm exec wrangler secret put SETUP_TOKEN --env produc
 
 Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `SETUP_TOKEN`, crée une passkey et range les nouveaux codes de secours.
 
+## Fichiers et abonnement calendrier
+
+- Les documents et la photo du profil sont dans un bucket R2 privé. Ils ne sont servis que par le Worker, à leur propriétaire, avec une politique de sécurité qui interdit tout script (voir ADR 0005).
+- Le lien d'abonnement au calendrier est la seule route lisible sans session. Il contient un jeton aléatoire de 256 bits, dont seule l'empreinte SHA-256 est en base. Le flux ne contient que des titres et des dates, jamais les notes. Remplacer ou désactiver le lien dans la page Calendrier le rend aussitôt inutilisable.
+
+## Notifications
+
+- Les messages Web Push sont chiffrés de bout en bout pour chaque appareil (RFC 8291) et signés avec la clé VAPID du serveur. Le Worker n'accepte que les adresses des services de push des navigateurs (Google, Mozilla, Apple, Microsoft).
+- Un appareil que le navigateur a désabonné est oublié au premier envoi refusé.
+- Telegram ne reçoit que le texte du récapitulatif (titres et dates des rappels). Le jeton du bot reste un secret du Worker ; la conversation se relie par un code à usage unique valable 15 minutes.
+
+## Sauvegardes
+
+- Les routes `/api/backup/*` n'existent que si le secret `BACKUP_TOKEN` est défini. Elles ne servent qu'à lire, avec ce jeton (comparaison à durée constante), un débit limité et une trace de chaque export dans le journal.
+- L'archive restic est chiffrée sur le Pi ; le mot de passe restic doit aussi être conservé hors du Pi.
+
 ## Signaler un problème
 
 Toute faille supposée se traite en priorité, avant toute nouvelle fonctionnalité.
