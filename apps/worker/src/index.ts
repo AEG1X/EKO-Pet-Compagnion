@@ -4,6 +4,7 @@ import { getDb } from './db/client';
 import type { AppEnv, Env } from './env';
 import { accountRoutes } from './routes/account';
 import { authRoutes, purgeExpiredAuthData } from './routes/auth';
+import { backupRoutes } from './routes/backup';
 import { dogRoutes } from './routes/dog';
 import { dailyRoutes } from './routes/daily';
 import { fileRoutes, purgePendingFiles } from './routes/files';
@@ -28,6 +29,7 @@ const api = new Hono<AppEnv>()
   .route('/auth', authRoutes)
   // Public (jeton dans l'adresse) : monté avant les routes privées, dont le contrôle de session s'applique à tout ce qui suit.
   .route('/', calendarFeedRoutes)
+  .route('/', backupRoutes)
   .route('/', accountRoutes)
   .route('/', dogRoutes)
   .route('/', healthRoutes)

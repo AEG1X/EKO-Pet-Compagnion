@@ -140,7 +140,7 @@ export function Dashboard() {
           Sections
         </h2>
         <div className="grid-cards">
-          {me.settings.sectionOrder.map((id) => {
+          {me.settings.sectionOrder.filter((id) => !me.settings.hiddenSections.includes(id)).map((id) => {
             const section = SECTIONS[id];
             return (
               <Link key={id} to={section.to} className="card section-card">

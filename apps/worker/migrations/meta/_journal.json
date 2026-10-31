@@ -50,6 +50,13 @@
       "when": 1793457131599,
       "tag": "0006_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793457549168,
+      "tag": "0007_tableau_de_bord",
+      "breakpoints": true
     }
   ]
 }

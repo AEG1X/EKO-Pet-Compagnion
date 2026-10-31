@@ -109,6 +109,8 @@ export const settings = sqliteTable('settings', {
   theme: text('theme').notNull(),
   accent: text('accent').notNull(),
   sectionOrder: text('section_order').notNull(),
+  /** Liste JSON des sections masquées du tableau de bord. */
+  hiddenSections: text('hidden_sections').notNull().default('[]'),
   updatedAt: integer('updated_at').notNull(),
 });
 

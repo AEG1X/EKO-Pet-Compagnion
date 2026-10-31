@@ -17,6 +17,8 @@ export const RATE_LIMITS = {
   login: { scope: 'login', limit: 20, windowSeconds: 900 },
   recovery: { scope: 'recovery', limit: 5, windowSeconds: 3600 },
   unlock: { scope: 'unlock', limit: 20, windowSeconds: 900 },
+  // Une sauvegarde complète : un export SQL et quelques fichiers nouveaux.
+  backup: { scope: 'backup', limit: 300, windowSeconds: 3600 },
 } satisfies Record<string, RateLimitRule>;
 
 /**

@@ -21,6 +21,8 @@ export interface Env {
   VAPID_PRIVATE_KEY?: string;
   /** Secret facultatif : jeton du bot Telegram, canal de secours des notifications. */
   TELEGRAM_BOT_TOKEN?: string;
+  /** Secret facultatif : jeton du Raspberry Pi pour tirer les sauvegardes (voir docs/sauvegarde.md). */
+  BACKUP_TOKEN?: string;
 }
 
 export interface AppVariables {
