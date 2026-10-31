@@ -25,7 +25,7 @@ import { findDog, requireDog, toDog } from './dog';
 type FileRow = typeof schema.storedFile.$inferSelect;
 
 /** Politique de sécurité propre aux fichiers servis : aucun script, aucun cadre. */
-const FILE_CSP = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; object-src 'self'; frame-ancestors 'none'";
+export const FILE_CSP = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; object-src 'self'; frame-ancestors 'none'";
 
 function toFile(row: FileRow): StoredFile {
   return { id: row.id, name: row.name, contentType: row.contentType, size: row.size };
