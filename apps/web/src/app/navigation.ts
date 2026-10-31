@@ -13,7 +13,7 @@ export interface NavEntry {
 export const NAV: NavEntry[] = [
   { to: '/', label: 'Tableau de bord', icon: 'home' },
   { to: '/profil', label: 'Profil d’Eko', icon: 'user' },
-  { to: '/sante', label: 'Santé', icon: 'heart', phase: 'A2', description: 'Vaccins, antiparasitaires, consultations, traitements et poids.' },
+  { to: '/sante', label: 'Santé', icon: 'heart' },
   { to: '/calendrier', label: 'Calendrier', icon: 'calendar', phase: 'A2', description: 'Échéances, rappels, export .ics et abonnement Apple Calendrier.' },
   { to: '/alimentation', label: 'Alimentation', icon: 'bowl', phase: 'A2', description: 'Repas, rations et changements d’alimentation.' },
   { to: '/education', label: 'Éducation', icon: 'cap', phase: 'A2', description: 'Apprentissages et séances d’éducation.' },

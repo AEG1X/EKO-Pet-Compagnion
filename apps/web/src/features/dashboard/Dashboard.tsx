@@ -4,6 +4,9 @@ import { useOwner } from '../../app/AppGate';
 import { Icon, type IconName, Paw } from '../../components/Icon';
 import { dogSubtitle } from '../profile/ProfilePage';
 import { useDog } from '../profile/queries';
+import { useHealthEvents } from '../health/queries';
+import { upcomingDue } from '../health/upcoming';
+import { daysUntil, formatDate, relativeDays } from '../../lib/dates';
 
 const SECTIONS: Record<DashboardSection, { label: string; icon: IconName; to: string; empty: string }> = {
   sante: { label: 'Santé', icon: 'heart', to: '/sante', empty: 'Aucun soin enregistré' },
@@ -23,6 +26,9 @@ function greeting(): string {
 export function Dashboard() {
   const me = useOwner();
   const dog = useDog();
+  const events = useHealthEvents();
+  const next = upcomingDue(events.data ?? [])[0];
+  const lastCare = events.data?.[0];
   const today = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
   return (
@@ -73,7 +79,16 @@ export function Dashboard() {
             <h2 id="next-title" className="eyebrow">
               Prochaine échéance
             </h2>
-            <p className="muted">Les rappels de santé et les rendez-vous apparaîtront ici.</p>
+            {next ? (
+              <Link to="/sante" className="stack" style={{ gap: 2, textDecoration: 'none' }}>
+                <strong>{next.title}</strong>
+                <span className={daysUntil(next.nextDueDate!) < 0 ? 'due due-late' : 'due'}>
+                  {formatDate(next.nextDueDate!)} · {relativeDays(next.nextDueDate!)}
+                </span>
+              </Link>
+            ) : (
+              <p className="muted">Les rappels de santé et les rendez-vous apparaîtront ici.</p>
+            )}
           </div>
         </div>
       </section>
@@ -91,7 +106,9 @@ export function Dashboard() {
                   <Icon name={section.icon} />
                 </span>
                 <strong>{section.label}</strong>
-                <span className="hint">{section.empty}</span>
+                <span className="hint">
+                  {id === 'sante' && lastCare ? `Dernier soin : ${lastCare.title}, ${formatDate(lastCare.date)}` : section.empty}
+                </span>
               </Link>
             );
           })}

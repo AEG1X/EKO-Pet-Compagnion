@@ -15,6 +15,13 @@
       "when": 1793454200842,
       "tag": "0001_profil_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793454747562,
+      "tag": "0002_sante_poids",
+      "breakpoints": true
     }
   ]
 }

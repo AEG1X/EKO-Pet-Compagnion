@@ -5,6 +5,7 @@ import type { AppEnv, Env } from './env';
 import { accountRoutes } from './routes/account';
 import { authRoutes, purgeExpiredAuthData } from './routes/auth';
 import { dogRoutes } from './routes/dog';
+import { healthRoutes } from './routes/health';
 import { csrfProtection } from './security/csrf';
 import { securityHeaders } from './security/headers';
 
@@ -22,7 +23,8 @@ const api = new Hono<AppEnv>()
   .get('/health', (c) => c.json({ ok: true }))
   .route('/auth', authRoutes)
   .route('/', accountRoutes)
-  .route('/', dogRoutes);
+  .route('/', dogRoutes)
+  .route('/', healthRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {

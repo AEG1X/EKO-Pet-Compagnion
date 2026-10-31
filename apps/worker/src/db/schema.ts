@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
  * Horodatages en millisecondes depuis l'époque Unix (UTC).
@@ -166,4 +166,60 @@ export const contact = sqliteTable(
     updatedAt: integer('updated_at').notNull(),
   },
   (t) => [index('contact_dog_idx').on(t.dogId)],
+);
+
+export const healthEvent = sqliteTable(
+  'health_event',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: ['vaccin', 'antiparasitaire', 'consultation', 'symptome', 'soin'] }).notNull(),
+    date: text('date').notNull(),
+    title: text('title').notNull(),
+    /** Vétérinaire ou autre contact ; conservé à null si le contact est supprimé. */
+    contactId: text('contact_id').references(() => contact.id, { onDelete: 'set null' }),
+    /** Prochaine échéance AAAA-MM-JJ : alimentera les rappels (étape 5). */
+    nextDueDate: text('next_due_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('health_event_dog_date_idx').on(t.dogId, t.date), index('health_event_due_idx').on(t.dogId, t.nextDueDate)],
+);
+
+export const treatment = sqliteTable(
+  'treatment',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    dosage: text('dosage'),
+    frequency: text('frequency'),
+    startDate: text('start_date').notNull(),
+    endDate: text('end_date'),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('treatment_dog_idx').on(t.dogId, t.startDate)],
+);
+
+export const weightEntry = sqliteTable(
+  'weight_entry',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    /** Une pesée par jour : en saisir une seconde remplace la première. */
+    date: text('date').notNull(),
+    grams: integer('grams').notNull(),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [uniqueIndex('weight_dog_date_idx').on(t.dogId, t.date)],
 );
