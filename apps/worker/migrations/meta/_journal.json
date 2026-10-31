@@ -22,6 +22,13 @@
       "when": 1793454747562,
       "tag": "0002_sante_poids",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793455154548,
+      "tag": "0003_quotidien",
+      "breakpoints": true
     }
   ]
 }

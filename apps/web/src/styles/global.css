@@ -801,3 +801,51 @@ select.input {
 .due-late {
   color: var(--danger);
 }
+.stat-cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat strong {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  align-items: center;
+}
+.bars li {
+  display: contents;
+}
+.bars-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.bars-track {
+  display: block;
+  height: 16px;
+}
+.bars-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+.bars-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+h3.eyebrow {
+  margin: 8px 0 0;
+}
