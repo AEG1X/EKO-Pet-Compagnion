@@ -69,6 +69,20 @@ Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `S
 - La suppression d'un souvenir efface l'original après une confirmation explicite.
 - Une empreinte SHA-256 de chaque original évite les doublons.
 
+## Albums partagés
+
+- Un album se partage par un lien `/partage/<jeton>` : jeton aléatoire de 128 bits, propre à chaque destinataire (« Famille », « Mamie »…).
+- Le lien est révocable à tout moment et peut expirer (24 h, 7 jours, 30 jours, 3 mois). Un lien révoqué, expiré ou inventé donne la même page « lien indisponible », sans rien révéler.
+- La page est rendue par le Worker, sans JavaScript, avec `noindex`, `no-referrer` et `no-store` : une révocation prend effet immédiatement, aperçus compris.
+- Le lien ne donne accès qu'aux souvenirs de cet album (aperçus et originaux). Le téléchargement explicite des originaux n'est proposé que si le lien l'autorise ; une personne qui voit une photo peut toujours l'enregistrer.
+- Les consultations sont limitées à 300 pages par heure et par visiteur. Le nombre d'ouvertures et la date de la dernière s'affichent pour chaque lien.
+- La création et la révocation d'un lien sont inscrites au journal de sécurité.
+
+## Export des souvenirs
+
+- L'export est assemblé par le navigateur en archives ZIP sans recompression (originaux intacts, fichier `souvenirs.json` avec dates, légendes et albums), par lots de 500 Mo au plus. Le Worker ne fait que servir les fichiers, avec la session habituelle.
+- La copie complète hors site reste la sauvegarde du Raspberry Pi (voir [sauvegarde.md](sauvegarde.md)).
+
 ## Signaler un problème
 
 Toute faille supposée se traite en priorité, avant toute nouvelle fonctionnalité.

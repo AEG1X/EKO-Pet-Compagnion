@@ -22,7 +22,9 @@ export type AuditEvent =
   | 'medal_replaced'
   | 'medal_deactivated'
   | 'lost_mode_on'
-  | 'lost_mode_off';
+  | 'lost_mode_off'
+  | 'share_created'
+  | 'share_revoked';
 
 /** Journal d'événements de sécurité. Le détail ne doit jamais contenir de secret ni d'IP. */
 export async function audit(db: Db, event: AuditEvent, detail?: string): Promise<void> {

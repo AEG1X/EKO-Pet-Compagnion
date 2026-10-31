@@ -30,7 +30,7 @@ type FileRow = typeof schema.storedFile.$inferSelect;
 /** Octets lus avant de reconnaître le format (signature et marque « ftyp »). */
 const SNIFF_BYTES = 16;
 
-function toMemory(row: MemoryRow, file: FileRow): Memory {
+function toMemory(row: MemoryRow, file: FileRow, albumIds: string[] = []): Memory {
   return {
     id: row.id,
     kind: row.kind,
@@ -47,11 +47,12 @@ function toMemory(row: MemoryRow, file: FileRow): Memory {
     durationSeconds: row.durationSeconds,
     url: fileUrl(file.id),
     previewUrl: row.previewFileId ? fileUrl(row.previewFileId) : null,
+    albumIds,
     createdAt: new Date(row.createdAt).toISOString(),
   };
 }
 
-async function listMemories(db: Db, dogId: string, id?: string): Promise<Memory[]> {
+export async function listMemories(db: Db, dogId: string, id?: string): Promise<Memory[]> {
   const m = schema.memory;
   const rows = await db
     .select({ memory: m, file: schema.storedFile })
@@ -59,7 +60,14 @@ async function listMemories(db: Db, dogId: string, id?: string): Promise<Memory[
     .innerJoin(schema.storedFile, eq(schema.storedFile.id, m.fileId))
     .where(id ? and(eq(m.dogId, dogId), eq(m.id, id)) : eq(m.dogId, dogId))
     .orderBy(desc(m.takenDate), desc(m.takenTime), desc(m.createdAt));
-  return rows.map(({ memory, file }) => toMemory(memory, file));
+  const links = await db
+    .select({ albumId: schema.albumMemory.albumId, memoryId: schema.albumMemory.memoryId })
+    .from(schema.albumMemory)
+    .innerJoin(schema.album, eq(schema.album.id, schema.albumMemory.albumId))
+    .where(id ? and(eq(schema.album.dogId, dogId), eq(schema.albumMemory.memoryId, id)) : eq(schema.album.dogId, dogId));
+  const albums = new Map<string, string[]>();
+  for (const l of links) albums.set(l.memoryId, [...(albums.get(l.memoryId) ?? []), l.albumId]);
+  return rows.map(({ memory, file }) => toMemory(memory, file, albums.get(memory.id)));
 }
 
 /** Lit le début d'un flux sans le consommer : renvoie ces octets et un flux complet équivalent. */

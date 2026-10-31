@@ -1,7 +1,9 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { Dashboard } from '../features/dashboard/Dashboard';
 import { MedalPage } from '../features/medal/MedalPage';
+import { AlbumPage, AlbumsPage } from '../features/memories/AlbumsPage';
 import { MemoriesPage } from '../features/memories/MemoriesPage';
+import { RemindersPage } from '../features/memories/RemindersPage';
 import { QuickAddPage } from '../features/quickadd/QuickAddPage';
 import { MorePage } from '../features/placeholder/MorePage';
 import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
@@ -29,6 +31,9 @@ const documentsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/do
 const calendarRoute = createRoute({ getParentRoute: () => rootRoute, path: '/calendrier', component: CalendarPage });
 const medalRoute = createRoute({ getParentRoute: () => rootRoute, path: '/medaille', component: MedalPage });
 const memoriesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/souvenirs', component: MemoriesPage });
+const albumsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/souvenirs/albums', component: AlbumsPage });
+const albumRoute = createRoute({ getParentRoute: () => rootRoute, path: '/souvenirs/albums/$albumId', component: AlbumPage });
+const memoryRemindersRoute = createRoute({ getParentRoute: () => rootRoute, path: '/souvenirs/rappels', component: RemindersPage });
 const moreRoute = createRoute({ getParentRoute: () => rootRoute, path: '/plus', component: MorePage });
 const addRoute = createRoute({ getParentRoute: () => rootRoute, path: '/ajouter', component: QuickAddPage });
 
@@ -41,7 +46,7 @@ const sectionRoutes = NAV.filter((entry) => entry.phase).map((entry) =>
   }),
 );
 
-const routeTree = rootRoute.addChildren([indexRoute, profileRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, calendarRoute, settingsRoute, medalRoute, memoriesRoute, moreRoute, addRoute, ...sectionRoutes]);
+const routeTree = rootRoute.addChildren([indexRoute, profileRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, calendarRoute, settingsRoute, medalRoute, memoriesRoute, albumsRoute, albumRoute, memoryRemindersRoute, moreRoute, addRoute, ...sectionRoutes]);
 
 export const router = createRouter({
   routeTree,

@@ -21,6 +21,8 @@ export const RATE_LIMITS = {
   backup: { scope: 'backup', limit: 300, windowSeconds: 3600 },
   // Signalements sur la fiche publique : quelques-uns par personne et par heure.
   report: { scope: 'report', limit: 5, windowSeconds: 3600 },
+  // Albums partagés : pages consultées par visiteur (les images ne comptent pas).
+  share: { scope: 'share', limit: 300, windowSeconds: 3600 },
 } satisfies Record<string, RateLimitRule>;
 
 /**
