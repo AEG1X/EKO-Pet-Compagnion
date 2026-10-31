@@ -11,6 +11,7 @@ import { fileRoutes, purgePendingFiles } from './routes/files';
 import { notificationRoutes, sendDailyDigests } from './routes/notifications';
 import { calendarFeedRoutes, reminderRoutes } from './routes/reminders';
 import { healthRoutes } from './routes/health';
+import { medalRoutes, publicMedalRoutes } from './routes/medal';
 import { csrfProtection } from './security/csrf';
 import { securityHeaders } from './security/headers';
 
@@ -36,7 +37,8 @@ const api = new Hono<AppEnv>()
   .route('/', dailyRoutes)
   .route('/', fileRoutes)
   .route('/', reminderRoutes)
-  .route('/', notificationRoutes);
+  .route('/', notificationRoutes)
+  .route('/', medalRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {
@@ -47,6 +49,9 @@ api.onError((err, c) => {
 });
 
 app.route('/api', api);
+
+// Fiche publique de la médaille (QR et NFC) : rendue par le Worker, sans session.
+app.route('/', publicMedalRoutes);
 
 // Tout le reste : l'application React (fichiers statiques, repli sur index.html).
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));

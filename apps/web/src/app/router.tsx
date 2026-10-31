@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { Dashboard } from '../features/dashboard/Dashboard';
+import { MedalPage } from '../features/medal/MedalPage';
 import { QuickAddPage } from '../features/quickadd/QuickAddPage';
 import { MorePage } from '../features/placeholder/MorePage';
 import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
@@ -25,6 +26,7 @@ const trainingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/edu
 const expensesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/depenses', component: ExpensesPage });
 const documentsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/documents', component: DocumentsPage });
 const calendarRoute = createRoute({ getParentRoute: () => rootRoute, path: '/calendrier', component: CalendarPage });
+const medalRoute = createRoute({ getParentRoute: () => rootRoute, path: '/medaille', component: MedalPage });
 const moreRoute = createRoute({ getParentRoute: () => rootRoute, path: '/plus', component: MorePage });
 const addRoute = createRoute({ getParentRoute: () => rootRoute, path: '/ajouter', component: QuickAddPage });
 
@@ -37,7 +39,7 @@ const sectionRoutes = NAV.filter((entry) => entry.phase).map((entry) =>
   }),
 );
 
-const routeTree = rootRoute.addChildren([indexRoute, profileRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, calendarRoute, settingsRoute, moreRoute, addRoute, ...sectionRoutes]);
+const routeTree = rootRoute.addChildren([indexRoute, profileRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, calendarRoute, settingsRoute, medalRoute, moreRoute, addRoute, ...sectionRoutes]);
 
 export const router = createRouter({
   routeTree,

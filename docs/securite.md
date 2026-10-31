@@ -45,6 +45,14 @@ Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `S
 - Les routes `/api/backup/*` n'existent que si le secret `BACKUP_TOKEN` est défini. Elles ne servent qu'à lire, avec ce jeton (comparaison à durée constante), un débit limité et une trace de chaque export dans le journal.
 - L'archive restic est chiffrée sur le Pi ; le mot de passe restic doit aussi être conservé hors du Pi.
 
+## Médaille et fiche publique
+
+- La fiche `/m/<identifiant>` est la seule page publique. L'identifiant compte 96 bits aléatoires. Le remplacer ou le désactiver rend l'ancienne médaille inopérante immédiatement, y compris pour la fiche de secours (ADR 0006).
+- Une adresse inconnue et une adresse révoquée donnent la même réponse.
+- La fiche n'affiche que ce que le propriétaire a coché. L'adresse, le numéro de puce, le passeport, les notes et les documents ne sont jamais publiés, quels que soient les réglages.
+- Le numéro de téléphone est masqué par défaut, avec un avertissement à l'activation.
+- La page est rendue par le Worker, sans JavaScript, avec la même CSP stricte et `noindex`. Seuls le nombre de visites et la date de la dernière sont enregistrés, sans adresse IP.
+
 ## Signaler un problème
 
 Toute faille supposée se traite en priorité, avant toute nouvelle fonctionnalité.

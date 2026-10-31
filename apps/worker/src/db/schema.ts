@@ -432,3 +432,24 @@ export const notificationRun = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.ownerId, t.day] })],
 );
+
+// ---------- Médaille (phase C) ----------
+
+/**
+ * Médaille NFC / QR du chien. public_id est l'identifiant aléatoire de l'adresse publique :
+ * null quand la médaille est désactivée. Le remplacer rend l'ancienne médaille inopérante.
+ */
+export const medal = sqliteTable('medal', {
+  dogId: text('dog_id')
+    .primaryKey()
+    .references(() => dog.id, { onDelete: 'cascade' }),
+  publicId: text('public_id').unique(),
+  /** Réglages d'affichage de la fiche publique (JSON, voir medalSettingsSchema). */
+  settings: text('settings').notNull(),
+  /** Empreinte du dernier instantané écrit dans R2 (fiche de secours si D1 est indisponible). */
+  snapshotHash: text('snapshot_hash'),
+  createdAt: integer('created_at'),
+  lastScanAt: integer('last_scan_at'),
+  scanCount: integer('scan_count').notNull().default(0),
+  updatedAt: integer('updated_at').notNull(),
+});

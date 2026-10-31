@@ -17,7 +17,10 @@ export type AuditEvent =
   | 'passkey_removed'
   | 'sessions_revoked'
   | 'logout'
-  | 'backup_exported';
+  | 'backup_exported'
+  | 'medal_activated'
+  | 'medal_replaced'
+  | 'medal_deactivated';
 
 /** Journal d'événements de sécurité. Le détail ne doit jamais contenir de secret ni d'IP. */
 export async function audit(db: Db, event: AuditEvent, detail?: string): Promise<void> {
