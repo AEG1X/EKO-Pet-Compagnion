@@ -7,6 +7,7 @@ import { authRoutes, purgeExpiredAuthData } from './routes/auth';
 import { dogRoutes } from './routes/dog';
 import { dailyRoutes } from './routes/daily';
 import { fileRoutes, purgePendingFiles } from './routes/files';
+import { notificationRoutes, sendDailyDigests } from './routes/notifications';
 import { calendarFeedRoutes, reminderRoutes } from './routes/reminders';
 import { healthRoutes } from './routes/health';
 import { csrfProtection } from './security/csrf';
@@ -32,7 +33,8 @@ const api = new Hono<AppEnv>()
   .route('/', healthRoutes)
   .route('/', dailyRoutes)
   .route('/', fileRoutes)
-  .route('/', reminderRoutes);
+  .route('/', reminderRoutes)
+  .route('/', notificationRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {
@@ -51,6 +53,7 @@ export default {
   fetch: app.fetch,
   async scheduled(_controller, env, ctx) {
     const db = getDb(env.DB);
-    ctx.waitUntil(Promise.all([purgeExpiredAuthData(db), purgePendingFiles(env, db)]));
+    // 3 h UTC : ménage ; 6 h et 7 h UTC : récapitulatif de 8 h, heure de Paris (été comme hiver).
+    ctx.waitUntil(Promise.all([purgeExpiredAuthData(db), purgePendingFiles(env, db), sendDailyDigests(env, db)]));
   },
 } satisfies ExportedHandler<Env>;
