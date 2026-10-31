@@ -43,7 +43,16 @@ function capitalize(value: string) {
 
 // ---------------------------------------------------------------- Formulaire
 
-function ReminderForm({ reminder, onDone }: { reminder?: Reminder; onDone: () => void }) {
+export function ReminderForm({
+  reminder,
+  onDone,
+  onSaved,
+}: {
+  reminder?: Reminder;
+  onDone: () => void;
+  /** Appelé après l'enregistrement à la place de onDone (ajout rapide). */
+  onSaved?: () => void;
+}) {
   const save = reminders.useSave();
   const [form, setForm] = useState({
     title: reminder?.title ?? '',
@@ -60,7 +69,7 @@ function ReminderForm({ reminder, onDone }: { reminder?: Reminder; onDone: () =>
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    save.mutate({ id: reminder?.id, input: { ...form, healthEventId: reminder?.healthEventId ?? null } }, { onSuccess: onDone });
+    save.mutate({ id: reminder?.id, input: { ...form, healthEventId: reminder?.healthEventId ?? null } }, { onSuccess: onSaved ?? onDone });
   }
 
   return (

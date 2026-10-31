@@ -37,7 +37,16 @@ const TABS: { id: Tab; label: string }[] = [
 
 // ---------------------------------------------------------------- Soins
 
-function EventForm({ event, onDone }: { event?: HealthEvent; onDone: () => void }) {
+export function EventForm({
+  event,
+  onDone,
+  onSaved,
+}: {
+  event?: HealthEvent;
+  onDone: () => void;
+  /** Appelé après l'enregistrement à la place de onDone (ajout rapide). */
+  onSaved?: () => void;
+}) {
   const contacts = useContacts();
   const save = useSaveEvent();
   const [form, setForm] = useState({
@@ -53,7 +62,7 @@ function EventForm({ event, onDone }: { event?: HealthEvent; onDone: () => void 
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    save.mutate({ id: event?.id, input: form }, { onSuccess: onDone });
+    save.mutate({ id: event?.id, input: form }, { onSuccess: onSaved ?? onDone });
   }
 
   return (
@@ -295,15 +304,12 @@ function TreatmentsPanel() {
 
 // ---------------------------------------------------------------- Poids
 
-function WeightPanel() {
-  const weights = useWeights();
+/** Saisie d'une pesée ; réutilisée par l'ajout rapide. */
+export function WeightForm({ onSaved, onCancel }: { onSaved?: () => void; onCancel?: () => void }) {
   const save = useSaveWeight();
-  const remove = useRemoveWeight();
   const [date, setDate] = useState(todayIso());
   const [kilos, setKilos] = useState('');
   const [inputError, setInputError] = useState<string | null>(null);
-  const [showTable, setShowTable] = useState(false);
-  const list = weights.data ?? [];
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -313,40 +319,64 @@ function WeightPanel() {
       return;
     }
     setInputError(null);
-    save.mutate({ input: { date, grams } }, { onSuccess: () => setKilos('') });
+    save.mutate(
+      { input: { date, grams } },
+      {
+        onSuccess: () => {
+          setKilos('');
+          onSaved?.();
+        },
+      },
+    );
   }
+
+  return (
+    <form className="form-grid" onSubmit={submit} aria-label="Nouvelle pesée">
+      <div className="field">
+        <label htmlFor="weight-kg">Poids (kg)</label>
+        <input
+          id="weight-kg"
+          className="input"
+          inputMode="decimal"
+          required
+          placeholder="23,4"
+          value={kilos}
+          onChange={(e) => setKilos(e.target.value)}
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="weight-date">Date</label>
+        <input id="weight-date" className="input" type="date" required max={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} />
+      </div>
+      {(inputError || save.isError) && (
+        <p className="alert span-2" role="alert">
+          {inputError ?? errorMessage(save.error)}
+        </p>
+      )}
+      <div className="form-actions span-2">
+        {onCancel && (
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>
+            Annuler
+          </button>
+        )}
+        <button className="btn btn-primary" disabled={save.isPending}>
+          {save.isPending ? 'Enregistrement…' : 'Enregistrer la pesée'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function WeightPanel() {
+  const weights = useWeights();
+  const remove = useRemoveWeight();
+  const [showTable, setShowTable] = useState(false);
+  const list = weights.data ?? [];
 
   return (
     <>
       <Section title="Nouvelle pesée">
-        <form className="form-grid" onSubmit={submit}>
-          <div className="field">
-            <label htmlFor="weight-kg">Poids (kg)</label>
-            <input
-              id="weight-kg"
-              className="input"
-              inputMode="decimal"
-              required
-              placeholder="23,4"
-              value={kilos}
-              onChange={(e) => setKilos(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="weight-date">Date</label>
-            <input id="weight-date" className="input" type="date" required max={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} />
-          </div>
-          {(inputError || save.isError) && (
-            <p className="alert span-2" role="alert">
-              {inputError ?? errorMessage(save.error)}
-            </p>
-          )}
-          <div className="form-actions span-2">
-            <button className="btn btn-primary" disabled={save.isPending}>
-              {save.isPending ? 'Enregistrement…' : 'Enregistrer la pesée'}
-            </button>
-          </div>
-        </form>
+        <WeightForm />
       </Section>
 
       <Section

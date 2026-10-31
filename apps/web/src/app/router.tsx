@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter } from '@tanstack/react-rout
 import { Dashboard } from '../features/dashboard/Dashboard';
 import { MedalPage } from '../features/medal/MedalPage';
 import { MemoriesPage } from '../features/memories/MemoriesPage';
+import { QuickAddPage } from '../features/quickadd/QuickAddPage';
 import { MorePage } from '../features/placeholder/MorePage';
 import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
 import { ProfilePage } from '../features/profile/ProfilePage';
@@ -29,21 +30,7 @@ const calendarRoute = createRoute({ getParentRoute: () => rootRoute, path: '/cal
 const medalRoute = createRoute({ getParentRoute: () => rootRoute, path: '/medaille', component: MedalPage });
 const memoriesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/souvenirs', component: MemoriesPage });
 const moreRoute = createRoute({ getParentRoute: () => rootRoute, path: '/plus', component: MorePage });
-const addRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/ajouter',
-  component: () => (
-    <SectionPlaceholder
-      entry={{
-        to: '/ajouter',
-        label: 'Ajout rapide',
-        icon: 'plus',
-        phase: 'A2',
-        description: 'Ajouter en deux gestes un soin, une pesée, une dépense ou un rappel.',
-      }}
-    />
-  ),
-});
+const addRoute = createRoute({ getParentRoute: () => rootRoute, path: '/ajouter', component: QuickAddPage });
 
 // Sections prévues dans les phases suivantes.
 const sectionRoutes = NAV.filter((entry) => entry.phase).map((entry) =>
