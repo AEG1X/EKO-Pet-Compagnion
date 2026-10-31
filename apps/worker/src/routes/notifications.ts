@@ -39,9 +39,17 @@ export interface Message {
 
 /**
  * Envoie un message sur tous les appareils abonnés. Telegram sert de secours : il n'est utilisé
- * que si aucune notification Web Push n'a pu partir.
+ * que si aucune notification Web Push n'a pu partir, sauf pour une alerte urgente (chien perdu),
+ * envoyée sur tous les canaux.
  */
-export async function deliver(env: Env, db: Db, ownerId: string, message: Message, fetcher: typeof fetch = fetch) {
+export async function deliver(
+  env: Env,
+  db: Db,
+  ownerId: string,
+  message: Message,
+  fetcher: typeof fetch = fetch,
+  options: { urgent?: boolean } = {},
+) {
   let pushed = 0;
   const vapid = vapidKeys(env);
   if (vapid) {
@@ -63,7 +71,7 @@ export async function deliver(env: Env, db: Db, ownerId: string, message: Messag
     }
   }
   let telegram = false;
-  if (pushed === 0 && env.TELEGRAM_BOT_TOKEN) {
+  if ((pushed === 0 || options.urgent) && env.TELEGRAM_BOT_TOKEN) {
     const link = await db.select().from(schema.telegramLink).where(eq(schema.telegramLink.ownerId, ownerId)).get();
     if (link?.chatId) {
       try {

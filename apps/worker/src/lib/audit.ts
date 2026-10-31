@@ -20,7 +20,9 @@ export type AuditEvent =
   | 'backup_exported'
   | 'medal_activated'
   | 'medal_replaced'
-  | 'medal_deactivated';
+  | 'medal_deactivated'
+  | 'lost_mode_on'
+  | 'lost_mode_off';
 
 /** Journal d'événements de sécurité. Le détail ne doit jamais contenir de secret ni d'IP. */
 export async function audit(db: Db, event: AuditEvent, detail?: string): Promise<void> {

@@ -6,6 +6,7 @@ import { Page, QueryError, Section } from '../../components/ui';
 import { errorMessage } from '../../lib/api';
 import { formatDate } from '../../lib/dates';
 import { useDog } from '../profile/queries';
+import { LostSection } from './LostSection';
 import { useDeactivateMedal, useMedal, useNewMedalLink, usePublicPreview, useSaveMedalSettings } from './queries';
 
 // ---------------------------------------------------------------- QR code
@@ -314,11 +315,12 @@ export function MedalPage() {
   const preview = usePublicPreview();
 
   return (
-    <Page title="Médaille NFC / QR" needsDog={dog.isSuccess && !dog.data}>
+    <Page title="Médaille et mode perdu" needsDog={dog.isSuccess && !dog.data}>
       <QueryError error={medal.error} />
       {hasDog && medal.data && (
         <>
           <LinkSection status={medal.data} />
+          <LostSection dogName={dog.data!.name} medalActive={Boolean(medal.data.url)} />
           <SettingsSection status={medal.data} />
           {preview.data && <Preview medal={preview.data} photoUrl={dog.data?.photoUrl ?? null} />}
         </>

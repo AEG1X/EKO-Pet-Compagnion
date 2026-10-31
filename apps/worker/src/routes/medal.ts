@@ -5,6 +5,7 @@ import {
   type MedalStatus,
   type PublicMedal,
   buildPublicMedal,
+  finderReportSchema,
   medalSettingsSchema,
   medalUrl,
 } from '@eko/shared';
@@ -15,9 +16,11 @@ import { type Db, getDb, schema } from '../db/client';
 import type { AppEnv, Env } from '../env';
 import { audit } from '../lib/audit';
 import { randomBytes, sha256, toBase64Url } from '../lib/crypto';
-import { renderMedalNotFound, renderMedalPage } from '../lib/medalPage';
+import { renderMedalNotFound, renderMedalPage, renderReportResult } from '../lib/medalPage';
+import { RATE_LIMITS, enforceRateLimit } from '../security/rateLimit';
 import { readJson } from '../lib/validate';
 import { requireDog } from './dog';
+import { alertScan, currentEpisode, recordReport } from './lost';
 import { FILE_CSP } from './files';
 
 type MedalRow = typeof schema.medal.$inferSelect;
@@ -41,13 +44,17 @@ interface Snapshot {
 }
 const snapshotKey = (publicId: string) => `public/medal/${publicId}.json`;
 
-interface LoadedMedal {
+export interface LoadedMedal {
   row: MedalRow;
+  ownerId: string;
+  dogName: string;
+  /** Épisode « perdu » en cours, s'il y en a un. */
+  episode: typeof schema.lostEpisode.$inferSelect | null;
   snapshot: Snapshot;
 }
 
 /** Fiche publique telle qu'elle doit s'afficher maintenant, à partir de D1. */
-async function loadPublicMedal(db: Db, where: ReturnType<typeof eq>): Promise<LoadedMedal | null> {
+export async function loadPublicMedal(db: Db, where: ReturnType<typeof eq>): Promise<LoadedMedal | null> {
   const row = await db.select().from(schema.medal).where(where).get();
   if (!row) return null;
   const dog = await db.select().from(schema.dog).where(eq(schema.dog.id, row.dogId)).get();
@@ -61,9 +68,18 @@ async function loadPublicMedal(db: Db, where: ReturnType<typeof eq>): Promise<Lo
   const photo = dog.photoFileId
     ? await db.select().from(schema.storedFile).where(eq(schema.storedFile.id, dog.photoFileId)).get()
     : undefined;
-  const medal = buildPublicMedal({ ...dog, hasPhoto: Boolean(photo) }, settings, vet ?? null);
+  const episode = await currentEpisode(db, dog.id);
+  const medal = buildPublicMedal(
+    { ...dog, hasPhoto: Boolean(photo) },
+    settings,
+    vet ?? null,
+    episode ? { message: episode.message } : null,
+  );
   return {
     row,
+    ownerId: dog.ownerId,
+    dogName: dog.name,
+    episode: episode ?? null,
     snapshot: {
       medal,
       photoKey: medal.hasPhoto && photo ? photo.r2Key : null,
@@ -73,7 +89,7 @@ async function loadPublicMedal(db: Db, where: ReturnType<typeof eq>): Promise<Lo
 }
 
 /** Réécrit l'instantané R2 seulement s'il a changé (une écriture R2 par modification, pas par visite). */
-async function refreshSnapshot(env: Env, db: Db, loaded: LoadedMedal): Promise<void> {
+export async function refreshSnapshot(env: Env, db: Db, loaded: LoadedMedal): Promise<void> {
   const { row, snapshot } = loaded;
   if (!row.publicId) return;
   const body = JSON.stringify(snapshot);
@@ -232,11 +248,57 @@ export const publicMedalRoutes = new Hono<AppEnv>()
             .update(schema.medal)
             .set({ lastScanAt: Date.now(), scanCount: sql`${schema.medal.scanCount} + 1` })
             .where(eq(schema.medal.dogId, loaded.row.dogId)),
+          alertScan(c.env, db, loaded),
         ]),
       );
     }
     const photoUrl = snapshot.photoKey ? `/m/${publicId}/photo` : null;
-    return htmlResponse(renderMedalPage(snapshot.medal, photoUrl), 200);
+    // Sans D1, la fiche reste lisible mais le signalement en ligne n'est pas proposé : l'appel l'est toujours.
+    const reportAction = loaded ? `/m/${publicId}/signaler` : null;
+    return htmlResponse(renderMedalPage(snapshot.medal, photoUrl, reportAction), 200);
+  })
+
+  // Signalement d'une personne qui a vu le chien (formulaire HTML, fonctionne sans JavaScript).
+  .post('/m/:id/signaler', async (c) => {
+    const publicId = c.req.param('id');
+    const back = `/m/${publicId}`;
+    if (c.req.header('origin') !== c.env.ORIGIN) return htmlResponse(renderMedalNotFound(), 403);
+    const found = await resolvePublic(c, publicId);
+    if (!found?.loaded) return htmlResponse(renderMedalNotFound(), 404);
+    const { loaded } = found;
+    const medal = loaded.snapshot.medal;
+    if (!loaded.episode) return htmlResponse(renderReportResult(medal, back, 'closed'), 409);
+
+    let fields: Record<string, string> = {};
+    try {
+      const form = await c.req.formData();
+      for (const [key, value] of form.entries()) if (typeof value === 'string') fields[key] = value;
+    } catch {
+      fields = {};
+    }
+    // Champ invisible rempli : robot. On répond comme si de rien n'était.
+    if (fields.website) return htmlResponse(renderReportResult(medal, back, 'ok'), 200);
+    const blank = (v: string | undefined) => (v === undefined || v.trim() === '' ? null : v);
+    const parsed = finderReportSchema.safeParse({
+      message: fields.message,
+      contact: fields.contact,
+      latitude: blank(fields.latitude),
+      longitude: blank(fields.longitude),
+      accuracy: blank(fields.accuracy),
+    });
+    if (!parsed.success) {
+      return htmlResponse(renderReportResult(medal, back, 'invalid', parsed.error.issues[0]?.message), 400);
+    }
+
+    const db = getDb(c.env.DB);
+    c.set('db', db);
+    try {
+      await enforceRateLimit(c, RATE_LIMITS.report);
+    } catch {
+      return htmlResponse(renderReportResult(medal, back, 'limited'), 429);
+    }
+    const outcome = await recordReport(c.env, db, loaded, parsed.data);
+    return htmlResponse(renderReportResult(medal, back, outcome === 'ok' ? 'ok' : 'limited'), outcome === 'ok' ? 200 : 429);
   })
 
   .get('/m/:id/photo', async (c) => {

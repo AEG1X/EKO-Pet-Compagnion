@@ -8,3 +8,4 @@ export * from './documents';
 export * from './reminders';
 export * from './notifications';
 export * from './medal';
+export * from './lost';

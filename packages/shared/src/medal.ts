@@ -65,6 +65,8 @@ export interface PublicMedal {
   message: string | null;
   owner: { name: string | null; phone: string } | null;
   vet: { name: string; organization: string | null; phone: string | null; address: string | null } | null;
+  /** Mode perdu : bandeau d'alerte et formulaire de signalement sur la fiche. */
+  lost: { message: string | null } | null;
 }
 
 /** Numéro au format tel: (chiffres et + uniquement). */
@@ -80,6 +82,7 @@ export function buildPublicMedal(
   dog: Pick<Dog, 'name' | 'breed' | 'sex' | 'birthDate' | 'area'> & { hasPhoto: boolean },
   settings: MedalSettings,
   vet: Pick<Contact, 'name' | 'organization' | 'phone' | 'address'> | null,
+  lost: { message: string | null } | null = null,
   today = new Date(),
 ): PublicMedal {
   return {
@@ -96,5 +99,6 @@ export function buildPublicMedal(
       settings.showVet && vet
         ? { name: vet.name, organization: vet.organization, phone: vet.phone, address: vet.address }
         : null,
+    lost,
   };
 }

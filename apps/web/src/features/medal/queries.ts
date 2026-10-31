@@ -1,4 +1,4 @@
-import type { MedalSettingsInput, MedalStatus, PublicMedal } from '@eko/shared';
+import type { LostModeInput, LostStatus, MedalSettingsInput, MedalStatus, PublicMedal } from '@eko/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 
@@ -35,4 +35,40 @@ export function useNewMedalLink() {
 
 export function useDeactivateMedal() {
   return useMedalMutation(() => api<MedalStatus>('/medal/link', { method: 'DELETE' }));
+}
+
+// ---------------------------------------------------------------- Mode perdu
+
+const lostKey = ['/lost'] as const;
+
+export function useLost() {
+  return useQuery({
+    queryKey: lostKey,
+    queryFn: () => api<LostStatus>('/lost'),
+    // Pendant le mode perdu, les nouveaux signalements apparaissent sans recharger.
+    refetchInterval: (query) => (query.state.data?.current ? 30_000 : false),
+  });
+}
+
+function useLostMutation<V>(mutationFn: (vars: V) => Promise<LostStatus>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (status) => {
+      queryClient.setQueryData(lostKey, status);
+      void queryClient.invalidateQueries({ queryKey: previewKey });
+    },
+  });
+}
+
+export function useStartLost() {
+  return useLostMutation((input: LostModeInput) => api<LostStatus>('/lost', { method: 'POST', body: input }));
+}
+
+export function useEndLost() {
+  return useLostMutation(() => api<LostStatus>('/lost', { method: 'DELETE' }));
+}
+
+export function useDeleteReport() {
+  return useLostMutation((id: string) => api<LostStatus>(`/lost/reports/${encodeURIComponent(id)}`, { method: 'DELETE' }));
 }
