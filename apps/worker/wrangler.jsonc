@@ -32,6 +32,9 @@
   "env": {
     "staging": {
       "name": "eko-staging",
+      // Seul le domaine personnalisé sert l'app : pas d'adresse workers.dev ni d'URL de prévisualisation.
+      "workers_dev": false,
+      "preview_urls": false,
       "routes": [{ "pattern": "staging.eko-companion.fr", "custom_domain": true }],
       "triggers": { "crons": ["0 3 * * *"] },
       "vars": {
@@ -51,6 +54,9 @@
     },
     "production": {
       "name": "eko",
+      // Seul le domaine personnalisé sert l'app : pas d'adresse workers.dev ni d'URL de prévisualisation.
+      "workers_dev": false,
+      "preview_urls": false,
       // Domaine encodé dans le QR de la médaille : ne plus le changer (voir docs/decisions/0003-domaine-personnel.md).
       "routes": [{ "pattern": "eko-companion.fr", "custom_domain": true }],
       "triggers": { "crons": ["0 3 * * *"] },
