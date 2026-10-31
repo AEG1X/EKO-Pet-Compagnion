@@ -29,6 +29,11 @@ openssl rand -base64 24 | pnpm exec wrangler secret put SETUP_TOKEN --env produc
 
 Ouvre ensuite EKO : l'écran de configuration réapparaît. Saisis le nouveau `SETUP_TOKEN`, crée une passkey et range les nouveaux codes de secours.
 
+## Fichiers et abonnement calendrier
+
+- Les documents et la photo du profil sont dans un bucket R2 privé. Ils ne sont servis que par le Worker, à leur propriétaire, avec une politique de sécurité qui interdit tout script (voir ADR 0005).
+- Le lien d'abonnement au calendrier est la seule route lisible sans session. Il contient un jeton aléatoire de 256 bits, dont seule l'empreinte SHA-256 est en base. Le flux ne contient que des titres et des dates, jamais les notes. Remplacer ou désactiver le lien dans la page Calendrier le rend aussitôt inutilisable.
+
 ## Signaler un problème
 
 Toute faille supposée se traite en priorité, avant toute nouvelle fonctionnalité.

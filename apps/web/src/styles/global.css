@@ -928,3 +928,126 @@ h3.eyebrow {
 .meter-warn .meter-fill {
   background: var(--danger);
 }
+
+/* ---------- Calendrier ---------- */
+.btn-small {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+.flip {
+  display: inline-flex;
+  transform: rotate(180deg);
+}
+.done {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.agenda-item {
+  align-items: center;
+}
+/* Repère de type : plein (rappel), anneau (échéance de santé), gris (soin effectué). La forme suffit sans la couleur. */
+.dot,
+.agenda-mark {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+}
+.agenda-mark {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.dot-echeance,
+.agenda-echeance .agenda-mark {
+  background: transparent;
+}
+.dot-soin,
+.agenda-soin .agenda-mark {
+  border-color: var(--muted);
+  background: var(--muted);
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-width: 1.5px;
+}
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.month {
+  display: grid;
+  gap: 4px;
+}
+.month-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.month-weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.month-day {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.month-day:hover {
+  background: var(--tint);
+}
+.month-out {
+  color: var(--muted);
+  opacity: 0.55;
+}
+.month-today > span:first-child {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.month-selected {
+  border-color: var(--accent);
+  background: var(--tint);
+}
+.month-dots {
+  display: flex;
+  gap: 3px;
+  min-height: 7px;
+}
+details > summary {
+  cursor: pointer;
+}

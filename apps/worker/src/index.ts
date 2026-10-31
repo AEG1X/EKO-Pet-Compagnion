@@ -7,6 +7,7 @@ import { authRoutes, purgeExpiredAuthData } from './routes/auth';
 import { dogRoutes } from './routes/dog';
 import { dailyRoutes } from './routes/daily';
 import { fileRoutes, purgePendingFiles } from './routes/files';
+import { calendarFeedRoutes, reminderRoutes } from './routes/reminders';
 import { healthRoutes } from './routes/health';
 import { csrfProtection } from './security/csrf';
 import { securityHeaders } from './security/headers';
@@ -24,11 +25,14 @@ const api = new Hono<AppEnv>()
   .use('*', csrfProtection)
   .get('/health', (c) => c.json({ ok: true }))
   .route('/auth', authRoutes)
+  // Public (jeton dans l'adresse) : monté avant les routes privées, dont le contrôle de session s'applique à tout ce qui suit.
+  .route('/', calendarFeedRoutes)
   .route('/', accountRoutes)
   .route('/', dogRoutes)
   .route('/', healthRoutes)
   .route('/', dailyRoutes)
-  .route('/', fileRoutes);
+  .route('/', fileRoutes)
+  .route('/', reminderRoutes);
 
 api.all('*', (c) => c.json({ error: 'not_found', message: 'Route inconnue.' }, 404));
 api.onError((err, c) => {

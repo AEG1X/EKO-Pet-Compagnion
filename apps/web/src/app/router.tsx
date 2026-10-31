@@ -6,6 +6,7 @@ import { ProfilePage } from '../features/profile/ProfilePage';
 import { HealthPage } from '../features/health/HealthPage';
 import { ExpensesPage } from '../features/daily/ExpensesPage';
 import { DocumentsPage } from '../features/documents/DocumentsPage';
+import { CalendarPage } from '../features/calendar/CalendarPage';
 import { FeedingPage } from '../features/daily/FeedingPage';
 import { TrainingPage } from '../features/daily/TrainingPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
@@ -22,6 +23,7 @@ const feedingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/alim
 const trainingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/education', component: TrainingPage });
 const expensesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/depenses', component: ExpensesPage });
 const documentsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/documents', component: DocumentsPage });
+const calendarRoute = createRoute({ getParentRoute: () => rootRoute, path: '/calendrier', component: CalendarPage });
 const moreRoute = createRoute({ getParentRoute: () => rootRoute, path: '/plus', component: MorePage });
 const addRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -48,7 +50,7 @@ const sectionRoutes = NAV.filter((entry) => entry.phase).map((entry) =>
   }),
 );
 
-const routeTree = rootRoute.addChildren([indexRoute, profileRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, settingsRoute, moreRoute, addRoute, ...sectionRoutes]);
+const routeTree = rootRoute.addChildren([indexRoute, profileRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, calendarRoute, settingsRoute, moreRoute, addRoute, ...sectionRoutes]);
 
 export const router = createRouter({
   routeTree,

@@ -36,7 +36,7 @@ docs/           Installation, déploiement, sécurité, journal des décisions
 | Phase | Contenu | État |
 | --- | --- | --- |
 | A1 | Socle : passkeys, PIN, sessions, sécurité, design system, navigation, PWA, CI | Terminée (30/10/2026) |
-| A2 | Profil, santé, quotidien, documents, rappels, calendrier, sauvegardes D1 | En cours (étapes 1 à 4 : profil, contacts, santé, alimentation, éducation, dépenses, documents, photo) |
+| A2 | Profil, santé, quotidien, documents, rappels, calendrier, sauvegardes D1 | En cours (étapes 1 à 5 : profil, contacts, santé, quotidien, documents, photo, rappels, calendrier) |
 | C | Médaille NFC/QR, fiche publique, mode perdu | À venir (avant B) |
 | B | Souvenirs : photos, vidéos, albums, partage | À venir |
 | D | Enrichissements | À venir |
