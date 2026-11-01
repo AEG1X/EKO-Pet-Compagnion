@@ -1,0 +1,39 @@
+name: Réinitialiser staging
+
+# Vide toutes les données de l'environnement de test (base et fichiers). Jamais la production :
+# la cible est écrite en dur dans apps/worker/scripts/reset-staging.mjs.
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Tape EFFACER pour confirmer la suppression de toutes les données de staging
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    if: ${{ inputs.confirmation == 'EFFACER' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: staging
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Réinitialisation
+        working-directory: apps/worker
+        run: node scripts/reset-staging.mjs
