@@ -971,6 +971,12 @@ h3.eyebrow {
   border-color: var(--muted);
   background: var(--muted);
 }
+/* Jalon de la portée (avant la naissance) : carré, distinct des ronds. */
+.dot-portee,
+.agenda-portee .agenda-mark {
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
 .dot {
   width: 7px;
   height: 7px;
@@ -1691,4 +1697,104 @@ li:last-child > .quick-choice {
   background: #a9c8a2;
   border-color: #a9c8a2;
   color: #14201a;
+}
+
+/* ---------- Avant la naissance : portée, parents, fiche vétérinaire ---------- */
+.timeline-past {
+  opacity: 0.6;
+}
+.parent-card {
+  align-items: stretch;
+}
+.parent-empty {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+.sheet-title {
+  font-size: 1.8rem;
+}
+.sheet-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  break-inside: avoid;
+}
+.sheet-block + .sheet-block {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.sheet-table caption {
+  text-align: left;
+  padding-bottom: 6px;
+}
+.sheet-table th,
+.sheet-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.sheet-table th {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sheet-contacts {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+.vet-sheet dd {
+  overflow-wrap: anywhere;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .vet-sheet .card {
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+    background: #fff;
+  }
+  .vet-sheet .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* Encre noire même en thème sombre. */
+  .vet-sheet,
+  .vet-sheet h2,
+  .vet-sheet dd,
+  .vet-sheet td {
+    color: #000;
+  }
+  .vet-sheet dt,
+  .vet-sheet th,
+  .vet-sheet .hint,
+  .vet-sheet .eyebrow {
+    color: #444;
+  }
 }

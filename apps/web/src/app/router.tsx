@@ -8,6 +8,7 @@ import { QuickAddPage } from '../features/quickadd/QuickAddPage';
 import { MorePage } from '../features/placeholder/MorePage';
 import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
 import { ProfilePage } from '../features/profile/ProfilePage';
+import { VetSheetPage } from '../features/profile/VetSheet';
 import { HealthPage } from '../features/health/HealthPage';
 import { ExpensesPage } from '../features/daily/ExpensesPage';
 import { DocumentsPage } from '../features/documents/DocumentsPage';
@@ -23,6 +24,7 @@ const rootRoute = createRootRoute({ component: Shell });
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: Dashboard });
 const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reglages', component: SettingsPage });
 const profileRoute = createRoute({ getParentRoute: () => rootRoute, path: '/profil', component: ProfilePage });
+const vetSheetRoute = createRoute({ getParentRoute: () => rootRoute, path: '/profil/fiche', component: VetSheetPage });
 const healthRoute = createRoute({ getParentRoute: () => rootRoute, path: '/sante', component: HealthPage });
 const feedingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/alimentation', component: FeedingPage });
 const trainingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/education', component: TrainingPage });
@@ -46,7 +48,7 @@ const sectionRoutes = NAV.filter((entry) => entry.phase).map((entry) =>
   }),
 );
 
-const routeTree = rootRoute.addChildren([indexRoute, profileRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, calendarRoute, settingsRoute, medalRoute, memoriesRoute, albumsRoute, albumRoute, memoryRemindersRoute, moreRoute, addRoute, ...sectionRoutes]);
+const routeTree = rootRoute.addChildren([indexRoute, profileRoute, vetSheetRoute, healthRoute, feedingRoute, trainingRoute, expensesRoute, documentsRoute, calendarRoute, settingsRoute, medalRoute, memoriesRoute, albumsRoute, albumRoute, memoryRemindersRoute, moreRoute, addRoute, ...sectionRoutes]);
 
 export const router = createRouter({
   routeTree,

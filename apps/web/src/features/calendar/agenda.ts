@@ -1,6 +1,6 @@
-import { HEALTH_EVENT_LABELS, type HealthEvent, type Reminder, occurrences, upcomingDue } from '@eko/shared';
+import { HEALTH_EVENT_LABELS, type HealthEvent, MILESTONE_LABELS, type Milestone, type Reminder, occurrences, upcomingDue } from '@eko/shared';
 
-export type AgendaType = 'rappel' | 'echeance' | 'soin';
+export type AgendaType = 'rappel' | 'echeance' | 'soin' | 'portee';
 
 export interface AgendaItem {
   key: string;
@@ -12,6 +12,16 @@ export interface AgendaItem {
   reminder?: Reminder;
   /** Rappel non fait dont la date est passée. */
   overdue?: boolean;
+  /** Jalon de la portée : estimation, éventuellement à quelques semaines près. */
+  milestone?: Milestone;
+}
+
+const monthName = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+
+/** « Naissance (estimation) », ou « Naissance (vers février 2027) » quand la saillie elle-même est approximative. */
+export function milestoneTitle(m: Milestone): string {
+  if (m.approximate) return `${MILESTONE_LABELS[m.kind]} (vers ${monthName.format(new Date(`${m.date}T12:00:00`))})`;
+  return `${MILESTONE_LABELS[m.kind]}${m.estimated ? ' (estimation)' : ''}`;
 }
 
 function byDateTime(a: AgendaItem, b: AgendaItem) {
@@ -28,7 +38,7 @@ export function agendaItems(
   from: string,
   to: string,
   today: string,
-  options: { includeOverdue?: boolean; includePastCare?: boolean; nextOnly?: boolean } = {},
+  options: { includeOverdue?: boolean; includePastCare?: boolean; nextOnly?: boolean; milestones?: Milestone[] } = {},
 ): AgendaItem[] {
   const items: AgendaItem[] = [];
   for (const r of reminders) {
@@ -65,6 +75,12 @@ export function agendaItems(
       if (e.date >= from && e.date <= to) {
         items.push({ key: `s-${e.id}`, date: e.date, time: null, title: `${HEALTH_EVENT_LABELS[e.kind]} : ${e.title}`, type: 'soin' });
       }
+    }
+  }
+  // Jalons de la portée : à venir seulement, sauf dans la grille du mois (soins passés compris).
+  for (const m of options.milestones ?? []) {
+    if (m.date >= from && m.date <= to && (m.date >= today || options.includePastCare)) {
+      items.push({ key: `p-${m.kind}`, date: m.date, time: null, title: milestoneTitle(m), type: 'portee', milestone: m });
     }
   }
   return items.sort(byDateTime);

@@ -2,10 +2,12 @@ import {
   type CalendarFeedCreated,
   type CalendarFeedStatus,
   HEALTH_EVENT_LABELS,
+  MILESTONE_LABELS,
   type HealthEvent,
   type Reminder,
   addDays,
   addMonths,
+  litterMilestones,
   nextOccurrence,
   occurrences,
   reminderInputSchema,
@@ -21,6 +23,7 @@ import { randomToken, sha256 } from '../lib/crypto';
 import { apiError } from '../lib/errors';
 import { type IcsEvent, buildCalendar } from '../lib/ics';
 import { findDog, requireDog } from './dog';
+import { findLitter } from './parents';
 
 type ReminderRow = typeof schema.reminder.$inferSelect;
 
@@ -56,7 +59,8 @@ const reminderCrud = dogCrud({
 });
 
 /** Événements du calendrier : rappels à venir (récurrences dépliées) et échéances de santé. */
-async function calendarEvents(db: Db, dogId: string, withNotes: boolean, today: string): Promise<IcsEvent[]> {
+async function calendarEvents(db: Db, dog: { id: string; birthDate: string | null }, withNotes: boolean, today: string): Promise<IcsEvent[]> {
+  const dogId = dog.id;
   const from = addDays(today, -90);
   const to = addMonths(today, 18);
   const reminders = await db.select().from(schema.reminder).where(eq(schema.reminder.dogId, dogId));
@@ -95,6 +99,17 @@ async function calendarEvents(db: Db, dogId: string, withNotes: boolean, today: 
       date: e.nextDueDate!,
       time: null,
       alarmDaysBefore: 7,
+    });
+  }
+  // Jalons de la portée (saillie, naissance, arrivée) : les estimations sont signalées comme telles.
+  for (const m of litterMilestones(await findLitter(db, dogId), dog.birthDate)) {
+    if (m.date < from || m.date > to) continue;
+    events.push({
+      uid: `portee-${m.kind}@eko`,
+      title: `${MILESTONE_LABELS[m.kind]}${m.estimated ? ' (estimation)' : ''}`,
+      date: m.date,
+      time: null,
+      alarmDaysBefore: m.approximate ? null : m.kind === 'arrivee' ? 7 : 1,
     });
   }
   return events.sort((a, b) => a.date.localeCompare(b.date));
@@ -138,7 +153,7 @@ export const reminderRoutes = new Hono<AppEnv>()
   // Export ponctuel (fichier .ics à importer), notes comprises.
   .get('/calendar.ics', async (c) => {
     const dog = await findDog(c.get('db'), c.get('session').ownerId);
-    const events = dog ? await calendarEvents(c.get('db'), dog.id, true, todayInParis()) : [];
+    const events = dog ? await calendarEvents(c.get('db'), dog, true, todayInParis()) : [];
     return c.body(buildCalendar(dog ? `EKO · ${dog.name}` : 'EKO', events), 200, {
       'content-type': 'text/calendar; charset=utf-8',
       'content-disposition': 'attachment; filename="eko.ics"',
@@ -201,7 +216,7 @@ export const calendarFeedRoutes = new Hono<AppEnv>().get('/calendar/feed/:file',
     await db.update(schema.calendarFeed).set({ lastUsedAt: now }).where(eq(schema.calendarFeed.ownerId, feed.ownerId));
   }
   const dog = await findDog(db, feed.ownerId);
-  const events = dog ? await calendarEvents(db, dog.id, false, todayInParis()) : [];
+  const events = dog ? await calendarEvents(db, dog, false, todayInParis()) : [];
   return c.body(buildCalendar(dog ? `EKO · ${dog.name}` : 'EKO', events), 200, {
     'content-type': 'text/calendar; charset=utf-8',
   });

@@ -12,3 +12,4 @@ export * from './lost';
 export * from './memories';
 export * from './albums';
 export * from './zip';
+export * from './litter';

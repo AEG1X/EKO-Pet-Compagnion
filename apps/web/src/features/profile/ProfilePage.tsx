@@ -1,10 +1,13 @@
 import { type Dog, SEX_LABELS, formatAge } from '@eko/shared';
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Icon, Paw } from '../../components/Icon';
 import { errorMessage } from '../../lib/api';
 import { Contacts } from './Contacts';
 import { DogForm } from './DogForm';
 import { DogAvatar, DogPhotoControls } from './DogPhoto';
+import { LitterSection } from './Litter';
+import { ParentsSection } from './Parents';
 import { useDog } from './queries';
 
 /** « de Max », mais « d’Eko » : élision devant une voyelle ou un h muet. */
@@ -19,6 +22,11 @@ export function dogSubtitle(dog: Dog): string {
   return [dog.breed, dog.sex ? SEX_LABELS[dog.sex] : null, dog.birthDate ? formatAge(dog.birthDate) : null]
     .filter(Boolean)
     .join(' · ');
+}
+
+/** Sous-titre d'un chien pas encore né : « Eurasier · à naître ». */
+export function unbornSubtitle(dog: Dog): string {
+  return [dog.breed, dog.sex ? SEX_LABELS[dog.sex] : null, 'à naître'].filter(Boolean).join(' · ');
 }
 
 function Fact({ label, value }: { label: string; value: string | null }) {
@@ -42,7 +50,7 @@ function DogDetails({ dog, onEdit }: { dog: Dog; onEdit: () => void }) {
           <DogAvatar dog={dog} size={96} />
           <div>
             <p className="hero-name">{dog.name}</p>
-            <p>{dogSubtitle(dog) || 'Profil à compléter'}</p>
+            <p>{dog.birthDate ? dogSubtitle(dog) || 'Profil à compléter' : unbornSubtitle(dog)}</p>
           </div>
         </div>
         <DogPhotoControls dog={dog} />
@@ -60,7 +68,7 @@ function DogDetails({ dog, onEdit }: { dog: Dog; onEdit: () => void }) {
           <Fact label="Sexe" value={dog.sex ? SEX_LABELS[dog.sex] : null} />
           <Fact
             label="Date de naissance"
-            value={dog.birthDate ? dateFormat.format(new Date(`${dog.birthDate}T00:00:00`)) : null}
+            value={dog.birthDate ? dateFormat.format(new Date(`${dog.birthDate}T00:00:00`)) : 'À naître'}
           />
           <Fact label="Stérilisé" value={neutered} />
           <Fact label="Robe" value={dog.coat} />
@@ -116,7 +124,18 @@ export function ProfilePage() {
         ) : (
           <>
             <DogDetails dog={dog.data} onEdit={() => setEditing(true)} />
+            <LitterSection dog={dog.data} />
+            <ParentsSection defaultBreed={dog.data.breed} />
             <Contacts />
+            <section className="card row" aria-labelledby="vet-sheet-title" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+              <div className="stack" style={{ gap: 2 }}>
+                <h2 id="vet-sheet-title">Fiche vétérinaire</h2>
+                <span className="hint">Chiot, portée, parents, tests de santé et contacts sur une page, à montrer ou imprimer.</span>
+              </div>
+              <Link to="/profil/fiche" className="btn btn-secondary">
+                <Icon name="file" size={18} /> Ouvrir la fiche
+              </Link>
+            </section>
           </>
         ))}
     </div>
