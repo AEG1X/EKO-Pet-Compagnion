@@ -70,3 +70,9 @@ Le récapitulatif part chaque jour à 8 h (heure de Paris). La tâche planifiée
 
 - `https://<domaine>/api/health` répond `{"ok":true}`.
 - Les en-têtes de sécurité sont présents : `curl -sI https://<domaine>/ | grep -i content-security-policy`.
+
+## 7. Repartir de zéro sur staging
+
+Le workflow **Réinitialiser staging** (onglet Actions, « Run workflow ») vide toutes les données de l'environnement de test : base D1 (le schéma et les migrations sont gardés) et fichiers R2. Il faut taper `EFFACER` pour confirmer. Il ne peut pas viser la production : la cible est écrite en dur dans `apps/worker/scripts/reset-staging.mjs`.
+
+Ensuite, ouvre `https://staging.eko-companion.fr` : EKO redemande le `SETUP_TOKEN` et crée une nouvelle passkey. L'ancienne passkey « EKO (test) » ne sert plus et peut être supprimée du téléphone.
