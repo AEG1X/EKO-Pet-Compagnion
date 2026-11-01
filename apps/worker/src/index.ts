@@ -15,6 +15,7 @@ import { healthRoutes } from './routes/health';
 import { lostRoutes, purgeOldReports } from './routes/lost';
 import { medalRoutes, publicMedalRoutes } from './routes/medal';
 import { memoryRoutes } from './routes/memories';
+import { parentRoutes } from './routes/parents';
 import { csrfProtection } from './security/csrf';
 import { securityHeaders } from './security/headers';
 
@@ -36,6 +37,7 @@ const api = new Hono<AppEnv>()
   .route('/', backupRoutes)
   .route('/', accountRoutes)
   .route('/', dogRoutes)
+  .route('/', parentRoutes)
   .route('/', healthRoutes)
   .route('/', dailyRoutes)
   .route('/', fileRoutes)

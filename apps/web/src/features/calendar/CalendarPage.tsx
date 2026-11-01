@@ -7,6 +7,8 @@ import {
   type Reminder,
   type ReminderKind,
   addDays,
+  litterMilestones,
+  type Milestone,
 } from '@eko/shared';
 import { type FormEvent, useState } from 'react';
 import { Icon } from '../../components/Icon';
@@ -15,6 +17,7 @@ import { errorMessage } from '../../lib/api';
 import { formatDate, parseIsoDate, relativeDays, todayIso } from '../../lib/dates';
 import { useHealthEvents } from '../health/queries';
 import { useDog } from '../profile/queries';
+import { useLitter } from '../profile/litterQueries';
 import { type AgendaItem, agendaItems, monthGrid } from './agenda';
 import { reminders, useCalendarFeed, useCreateFeed, useRevokeFeed, useToggleDone } from './queries';
 
@@ -158,7 +161,13 @@ function AgendaRow({ item, today }: { item: AgendaItem; today: string }) {
         <strong>{item.title}</strong>
         <span className={item.overdue ? 'hint due-late' : 'hint'}>
           {item.time ? `${item.time.replace(':', ' h ')} · ` : ''}
-          {item.type === 'echeance' ? 'Échéance de santé' : item.type === 'soin' ? 'Soin effectué' : REMINDER_KIND_LABELS[item.reminder!.kind]}
+          {item.type === 'echeance'
+            ? 'Échéance de santé'
+            : item.type === 'soin'
+              ? 'Soin effectué'
+              : item.type === 'portee'
+                ? 'Avant la naissance'
+                : REMINDER_KIND_LABELS[item.reminder!.kind]}
           {item.overdue ? ` · ${relativeDays(item.date, today)}` : ''}
         </span>
       </div>
@@ -213,11 +222,21 @@ function UpcomingPanel({ list, today }: { list: AgendaItem[]; today: string }) {
 
 // ---------------------------------------------------------------- Mois
 
-function MonthPanel({ all, events, today }: { all: Reminder[]; events: Parameters<typeof agendaItems>[1]; today: string }) {
+function MonthPanel({
+  all,
+  events,
+  milestones,
+  today,
+}: {
+  all: Reminder[];
+  events: Parameters<typeof agendaItems>[1];
+  milestones: Milestone[];
+  today: string;
+}) {
   const [cursor, setCursor] = useState(() => ({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 }));
   const [selected, setSelected] = useState(today);
   const grid = monthGrid(cursor.year, cursor.month);
-  const items = agendaItems(all, events, grid[0]!, grid.at(-1)!, today, { includePastCare: true });
+  const items = agendaItems(all, events, grid[0]!, grid.at(-1)!, today, { includePastCare: true, milestones });
   const byDate = groupByDate(items);
   const monthPrefix = `${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}`;
   const move = (delta: number) =>
@@ -289,6 +308,11 @@ function MonthPanel({ all, events, today }: { all: Reminder[]; events: Parameter
         <li>
           <span className="dot dot-soin" /> Soin effectué
         </li>
+        {milestones.length > 0 && (
+          <li>
+            <span className="dot dot-portee" /> Avant la naissance
+          </li>
+        )}
       </ul>
       <div className="stack" style={{ gap: 4 }}>
         <h3 className="eyebrow">{dayTitle(selected, today)}</h3>
@@ -375,7 +399,7 @@ function SyncSection() {
   return (
     <Section title="Synchroniser">
       <p className="hint">
-        Ajoute les rappels et les échéances de santé à Apple Calendrier ou Google Agenda. Le lien d’abonnement se met à jour
+        Ajoute les rappels, les échéances de santé et les dates de la portée à Apple Calendrier ou Google Agenda. Le lien d’abonnement se met à jour
         tout seul ; il contient les titres et les dates, jamais les notes.
       </p>
       <QueryError error={feed.error ?? create.error ?? revoke.error} />
@@ -443,11 +467,13 @@ export function CalendarPage() {
   const dog = useDog();
   const list = reminders.useList();
   const events = useHealthEvents();
+  const litter = useLitter();
+  const milestones = litterMilestones(litter.data ?? null, dog.data?.birthDate ?? null);
   const [tab, setTab] = useState<Tab>('avenir');
   const [editing, setEditing] = useState<string | null>(null);
   const today = todayIso();
   const all = list.data ?? [];
-  const upcoming = agendaItems(all, events.data ?? [], today, addDays(today, 60), today, { includeOverdue: true, nextOnly: true });
+  const upcoming = agendaItems(all, events.data ?? [], today, addDays(today, 60), today, { includeOverdue: true, nextOnly: true, milestones });
 
   return (
     <Page title="Calendrier" needsDog={dog.isSuccess && !dog.data}>
@@ -463,7 +489,7 @@ export function CalendarPage() {
           <QueryError error={list.error ?? events.error} />
           {editing === 'new' && tab !== 'mois' && <ReminderForm onDone={() => setEditing(null)} />}
           {list.isSuccess && tab === 'avenir' && <UpcomingPanel list={upcoming} today={today} />}
-          {list.isSuccess && tab === 'mois' && <MonthPanel all={all} events={events.data ?? []} today={today} />}
+          {list.isSuccess && tab === 'mois' && <MonthPanel all={all} events={events.data ?? []} milestones={milestones} today={today} />}
           {list.isSuccess && tab === 'rappels' && <RemindersPanel all={all} editing={editing} setEditing={setEditing} />}
         </section>
       </TabPanel>

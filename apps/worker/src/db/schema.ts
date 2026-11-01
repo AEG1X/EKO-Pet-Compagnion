@@ -619,3 +619,66 @@ export const memoryReminderSettings = sqliteTable('memory_reminder_settings', {
   specialDates: integer('special_dates', { mode: 'boolean' }).notNull(),
   updatedAt: integer('updated_at').notNull(),
 });
+
+/** Portée d'origine du chiot (avant sa naissance) : une ligne au plus par chien. */
+export const litter = sqliteTable('litter', {
+  dogId: text('dog_id')
+    .primaryKey()
+    .references(() => dog.id, { onDelete: 'cascade' }),
+  /** Saillie, AAAA-MM-JJ ; approximative (« vers décembre ») si mating_approx. */
+  matingDate: text('mating_date'),
+  matingApprox: integer('mating_approx', { mode: 'boolean' }).notNull().default(false),
+  ultrasoundResult: text('ultrasound_result'),
+  /** Arrivée à la maison convenue avec l'éleveur, AAAA-MM-JJ. */
+  homeDate: text('home_date'),
+  notes: text('notes'),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+/** Père et mère du chien : un de chaque au plus. */
+export const dogParent = sqliteTable(
+  'dog_parent',
+  {
+    id: text('id').primaryKey(),
+    dogId: text('dog_id')
+      .notNull()
+      .references(() => dog.id, { onDelete: 'cascade' }),
+    role: text('role', { enum: ['pere', 'mere'] }).notNull(),
+    name: text('name').notNull(),
+    affix: text('affix'),
+    breed: text('breed'),
+    birthDate: text('birth_date'),
+    coat: text('coat'),
+    registration: text('registration'),
+    chipNumber: text('chip_number'),
+    pedigreeUrl: text('pedigree_url'),
+    titles: text('titles'),
+    notes: text('notes'),
+    /** Le fichier est supprimé de R2 par la route qui remplace la photo ou supprime le parent. */
+    photoFileId: text('photo_file_id').references(() => storedFile.id, { onDelete: 'set null' }),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [uniqueIndex('dog_parent_role_idx').on(t.dogId, t.role)],
+);
+
+/** Tests de santé d'un parent (hanches, yeux, ADN…), avec le résultat rangé dans Documents. */
+export const parentHealthTest = sqliteTable(
+  'parent_health_test',
+  {
+    id: text('id').primaryKey(),
+    parentId: text('parent_id')
+      .notNull()
+      .references(() => dogParent.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    result: text('result'),
+    date: text('date'),
+    lab: text('lab'),
+    documentId: text('document_id').references(() => document.id, { onDelete: 'set null' }),
+    notes: text('notes'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('parent_health_test_parent_idx').on(t.parentId)],
+);

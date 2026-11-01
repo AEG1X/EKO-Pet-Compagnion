@@ -2,7 +2,9 @@ import type { DashboardSection } from '@eko/shared';
 import { Link } from '@tanstack/react-router';
 import { useOwner } from '../../app/AppGate';
 import { Icon, type IconName, Paw } from '../../components/Icon';
-import { dogSubtitle } from '../profile/ProfilePage';
+import { dogSubtitle, unbornSubtitle } from '../profile/ProfilePage';
+import { approximateDelay, countdown, nextMilestone } from '../profile/Litter';
+import { useLitter } from '../profile/litterQueries';
 import { useMemories } from '../memories/queries';
 import { useDog } from '../profile/queries';
 import { DogAvatar } from '../profile/DogPhoto';
@@ -13,7 +15,7 @@ import { reminders } from '../calendar/queries';
 import { expenses, feedingPlans, skills } from '../daily/queries';
 import { describeRation } from '../daily/FeedingPage';
 import { totalFor } from '../daily/ExpensesPage';
-import { addDays, formatEuros } from '@eko/shared';
+import { addDays, formatEuros, litterMilestones } from '@eko/shared';
 import { daysUntil, formatDate, relativeDays, todayIso } from '../../lib/dates';
 
 const SECTIONS: Record<DashboardSection, { label: string; icon: IconName; to: string; empty: string }> = {
@@ -24,6 +26,10 @@ const SECTIONS: Record<DashboardSection, { label: string; icon: IconName; to: st
   depenses: { label: 'Dépenses', icon: 'wallet', to: '/depenses', empty: 'Aucune dépense' },
   documents: { label: 'Documents', icon: 'file', to: '/documents', empty: 'Aucun document' },
 };
+
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -36,8 +42,15 @@ export function Dashboard() {
   const dog = useDog();
   const events = useHealthEvents();
   const reminderList = reminders.useList();
-  // Prochain élément de l'agenda : rappel (même en retard) ou échéance de santé.
-  const next = agendaItems(reminderList.data ?? [], events.data ?? [], todayIso(), addDays(todayIso(), 365), todayIso(), { includeOverdue: true })[0];
+  const litter = useLitter(dog.isSuccess && Boolean(dog.data));
+  const milestones = dog.data ? litterMilestones(litter.data ?? null, dog.data.birthDate) : [];
+  // Pas encore né : compte à rebours jusqu'à la naissance (ou l'arrivée, une fois la naissance passée).
+  const unbornNext = dog.data && !dog.data.birthDate ? (milestones.find((m) => m.kind === 'naissance' && m.date >= todayIso()) ?? nextMilestone(litter.data ?? null, dog.data)) : null;
+  // Prochain élément de l'agenda : rappel (même en retard), échéance de santé ou jalon de la portée.
+  const next = agendaItems(reminderList.data ?? [], events.data ?? [], todayIso(), addDays(todayIso(), 365), todayIso(), {
+    includeOverdue: true,
+    milestones,
+  })[0];
   const lastCare = events.data?.[0];
   const plans = feedingPlans.useList();
   const skillList = skills.useList();
@@ -101,7 +114,8 @@ export function Dashboard() {
               <DogAvatar dog={dog.data} size={72} />
               <div>
                 <p className="hero-name">{dog.data.name}</p>
-                <p>{dogSubtitle(dog.data)}</p>
+                <p>{dog.data.birthDate ? dogSubtitle(dog.data) : unbornSubtitle(dog.data)}</p>
+                {unbornNext && <p>{countdown(unbornNext)}</p>}
               </div>
             </div>
           ) : (
@@ -128,10 +142,14 @@ export function Dashboard() {
             {next ? (
               <Link to="/calendrier" className="stack" style={{ gap: 2, textDecoration: 'none' }}>
                 <strong>{next.title}</strong>
-                <span className={daysUntil(next.date) < 0 ? 'due due-late' : 'due'}>
-                  {formatDate(next.date)}
-                  {next.time ? ` à ${next.time.replace(':', ' h ')}` : ''} · {relativeDays(next.date)}
-                </span>
+                {next.milestone?.approximate ? (
+                  <span className="due">{capitalize(approximateDelay(next.milestone))}</span>
+                ) : (
+                  <span className={daysUntil(next.date) < 0 ? 'due due-late' : 'due'}>
+                    {formatDate(next.date)}
+                    {next.time ? ` à ${next.time.replace(':', ' h ')}` : ''} · {relativeDays(next.date)}
+                  </span>
+                )}
               </Link>
             ) : (
               <p className="muted">Les rappels et les échéances de santé apparaîtront ici.</p>

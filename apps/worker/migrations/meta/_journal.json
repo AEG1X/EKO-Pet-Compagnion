@@ -85,6 +85,13 @@
       "when": 1793470996565,
       "tag": "0011_albums_partage",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1793571932758,
+      "tag": "0012_portee_parents",
+      "breakpoints": true
     }
   ]
 }

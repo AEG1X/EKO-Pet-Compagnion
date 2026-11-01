@@ -74,3 +74,24 @@ describe('monthGrid', () => {
     expect(grid.at(-1)).toBe('2026-12-06');
   });
 });
+
+describe('jalons de la portée dans l’agenda', () => {
+  const milestones = [
+    { kind: 'saillie' as const, date: '2026-12-15', estimated: true, approximate: true },
+    { kind: 'naissance' as const, date: '2027-02-16', estimated: true, approximate: true },
+    { kind: 'arrivee' as const, date: '2027-04-13', estimated: false, approximate: false },
+  ];
+
+  it('ajoute les jalons à venir, avec un titre qui dit s’il s’agit d’une estimation', () => {
+    const items = agendaItems([], [], '2027-01-01', '2027-12-31', '2027-01-01', { milestones });
+    expect(items.map((i) => [i.type, i.title])).toEqual([
+      ['portee', 'Naissance (vers février 2027)'],
+      ['portee', 'Arrivée à la maison'],
+    ]);
+  });
+
+  it('montre aussi les jalons passés dans la grille du mois', () => {
+    const items = agendaItems([], [], '2026-12-01', '2026-12-31', '2027-01-01', { includePastCare: true, milestones });
+    expect(items.map((i) => i.title)).toEqual(['Saillie de la mère (vers décembre 2026)']);
+  });
+});
